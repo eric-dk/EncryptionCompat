@@ -1,0 +1,16 @@
+apply plugin: 'com.android.library'
+
+android {
+    buildToolsVersion versions.android.buildTools
+    compileSdkVersion versions.sdk.target
+
+    defaultConfig {
+        minSdkVersion versions.sdk.minimum
+        targetSdkVersion versions.sdk.target
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+    }
+}
+
+dependencies {
+    testImplementation 'junit:junit:4.12'
+}

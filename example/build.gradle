@@ -1,0 +1,18 @@
+apply plugin: 'com.android.application'
+
+android {
+    buildToolsVersion versions.android.buildTools
+    compileSdkVersion versions.sdk.target
+
+    defaultConfig {
+        applicationId "com.ericdk.encryptioncompat"
+        minSdkVersion versions.sdk.minimum
+        targetSdkVersion versions.sdk.target
+        versionCode 1
+        versionName "1.0"
+    }
+}
+
+dependencies {
+    implementation 'com.android.support:appcompat-v7:27.0.2'
+}

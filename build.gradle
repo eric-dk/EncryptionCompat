@@ -1,0 +1,34 @@
+buildscript {
+    ext {
+        versions = [
+                android: [
+                        buildTools: '27.0.3'
+                ],
+                sdk: [
+                        minimum: 14,
+                        target:  27
+                ],
+                test: [
+                        junit: '4.12'
+                ]
+        ]
+    }
+    repositories {
+        google()
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:3.0.1'
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        jcenter()
+    }
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}
