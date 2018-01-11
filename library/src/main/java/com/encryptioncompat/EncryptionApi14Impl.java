@@ -1,35 +1,35 @@
 package com.encryptioncompat;
 
-import android.annotation.TargetApi;
 import java.security.GeneralSecurityException;
 import java.security.Key;
-import javax.crypto.Cipher;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.KeySpec;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
+import javax.crypto.spec.SecretKeySpec;
 
-@TargetApi(18)
-class EncryptionApi14Impl extends EncryptionBaseImpl {
-    private Cipher cipher;
-    private Key key;
-    private String password;
+final class EncryptionApi14Impl extends EncryptionSecretImpl {
+    private static final int ITERATION_COUNT = 1000;
 
-    private EncryptionApi14Impl() {}
+    private final SecretKeyFactory factory;
+
+    private EncryptionApi14Impl() {
+        try {
+            factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
+        } catch (NoSuchAlgorithmException e) {
+            throw new EncryptionException(e);
+        }
+    }
+
     static EncryptionApi14Impl get() {
         return Lazy.INSTANCE;
     }
 
     @Override
-    Cipher getSymmetricCipher() throws GeneralSecurityException {
-        if (cipher == null) {
-            cipher = Cipher.getInstance("AES/CBC/PKCS7Padding");
-        }
-        return cipher;
-    }
-
-    @Override
-    Key getSymmetricKey() throws GeneralSecurityException {
-        if (key == null) {
-
-        }
-        return key;
+    Key getKey(String password, byte[] salt, int keyLength) throws GeneralSecurityException {
+        KeySpec spec = new PBEKeySpec(password.toCharArray(), salt, ITERATION_COUNT, keyLength);
+        byte[] encoded = factory.generateSecret(spec).getEncoded();
+        return new SecretKeySpec(encoded, "AES");
     }
 
     private static final class Lazy {

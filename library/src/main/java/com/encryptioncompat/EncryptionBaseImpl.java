@@ -8,44 +8,51 @@ import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 
 abstract class EncryptionBaseImpl {
-    private static final String IV_SEPARATOR = "]";
+    static final String FIELD_SEPARATOR = "]";
 
-    final SecureRandom random = new SecureRandom();
+    private final Cipher cipher;
+    private final SecureRandom random;
 
-    abstract Cipher getSymmetricCipher() throws GeneralSecurityException;
-    abstract Key getSymmetricKey() throws GeneralSecurityException;
+    EncryptionBaseImpl() {
+        try {
+            cipher = Cipher.getInstance("AES/CBC/PKCS7Padding");
+        } catch (GeneralSecurityException e) {
+            throw new EncryptionException(e);
+        }
+        random = new SecureRandom();
+    }
 
-    synchronized String encrypt(String value) throws GeneralSecurityException {
-        Cipher cipher = getSymmetricCipher();
-        Key key = getSymmetricKey();
-
+    synchronized final String encrypt(Key key, byte[] plainText) throws EncryptionException {
         byte[] iv = new byte[cipher.getBlockSize()];
         random.nextBytes(iv);
         String ivString = Base64.encodeToString(iv, Base64.DEFAULT);
 
-        cipher.init(Cipher.ENCRYPT_MODE, key, new IvParameterSpec(iv));
-        byte[] encoded = cipher.doFinal(value.getBytes());
-        String encodedString = Base64.encodeToString(encoded, Base64.DEFAULT);
-
-        return ivString + IV_SEPARATOR + encodedString;
+        String result;
+        try {
+            cipher.init(Cipher.ENCRYPT_MODE, key, new IvParameterSpec(iv));
+            byte[] cipherText = cipher.doFinal(plainText);
+            result = Base64.encodeToString(cipherText, Base64.DEFAULT);
+        } catch (GeneralSecurityException e) {
+            throw new EncryptionException(e);
+        }
+        return ivString + FIELD_SEPARATOR + result;
     }
 
-    synchronized String decrypt(String value) throws GeneralSecurityException {
-        String[] fields = value.split(IV_SEPARATOR);
-        if (fields.length != 2) {
-            throw new IllegalStateException("IV not found");
+    synchronized final String decrypt(Key key,
+                                      byte[] iv,
+                                      byte[] cipherText) throws EncryptionException {
+        String result;
+        try {
+            cipher.init(Cipher.DECRYPT_MODE, key, new IvParameterSpec(iv));
+            byte[] plainText = cipher.doFinal(cipherText);
+            result = new String(plainText);
+        } catch (GeneralSecurityException e) {
+            throw new EncryptionException(e);
         }
+        return result;
+    }
 
-        Cipher cipher = getSymmetricCipher();
-        Key key = getSymmetricKey();
-
-        String ivString = fields[0];
-        String encodedString = fields[1];
-
-        byte[] iv = Base64.decode(ivString, Base64.DEFAULT);
-        byte[] encoded = Base64.decode(encodedString, Base64.DEFAULT);
-        cipher.init(Cipher.DECRYPT_MODE, key, new IvParameterSpec(iv));
-
-        return new String(cipher.doFinal(encoded));
+    SecureRandom getRandom() {
+        return random;
     }
 }

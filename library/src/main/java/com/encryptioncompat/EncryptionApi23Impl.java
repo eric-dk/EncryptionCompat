@@ -3,46 +3,53 @@ package com.encryptioncompat;
 import android.annotation.TargetApi;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
+import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.Key;
-import javax.crypto.Cipher;
+import java.security.KeyStore;
 import javax.crypto.KeyGenerator;
 
 @TargetApi(23)
-class EncryptionApi23Impl extends EncryptionBaseImpl {
-    private static final String MASTER_KEY = "SYMMETRIC_KEY";
+final class EncryptionApi23Impl extends EncryptionKeyStoreImpl {
+    private static final String KEY_PROVIDER = "AndroidKeyStore";
+    private static final String MASTER_KEY   = "SYMMETRIC_KEY";
 
-    private Cipher cipher;
     private Key key;
 
-    private EncryptionApi23Impl() {}
     static EncryptionApi23Impl get() {
         return Lazy.INSTANCE;
     }
 
     @Override
-    Cipher getSymmetricCipher() throws GeneralSecurityException {
-        if (cipher == null) {
-            cipher = Cipher.getInstance("AES/CBC/PKCS7Padding");
-        }
-        return cipher;
-    }
-
-    @Override
-    Key getSymmetricKey() throws GeneralSecurityException {
+    Key getKey() throws EncryptionException {
         if (key == null) {
-            KeyGenerator generator = KeyGenerator
-                    .getInstance(KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore");
-            KeyGenParameterSpec spec = new KeyGenParameterSpec.Builder(MASTER_KEY,
-                    KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT)
-                    .setBlockModes(KeyProperties.BLOCK_MODE_CBC)
-                    .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_PKCS7)
-                    .build();
+            try {
+                KeyStore keyStore = KeyStore.getInstance(KEY_PROVIDER);
+                keyStore.load(null);
 
-            generator.init(spec);
-            key = generator.generateKey();
+                if (keyStore.containsAlias(MASTER_KEY)) {
+                    key = keyStore.getKey(MASTER_KEY, null);
+                } else {
+                    key = createKey();
+                }
+            } catch (GeneralSecurityException | IOException e) {
+                throw new EncryptionException(e);
+            }
         }
         return key;
+    }
+
+    private Key createKey() throws GeneralSecurityException {
+        KeyGenerator generator = KeyGenerator
+                .getInstance(KeyProperties.KEY_ALGORITHM_AES, KEY_PROVIDER);
+        KeyGenParameterSpec spec = new KeyGenParameterSpec.Builder(MASTER_KEY,
+                KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT)
+                .setBlockModes(KeyProperties.BLOCK_MODE_CBC)
+                .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_PKCS7)
+                .build();
+
+        generator.init(spec);
+        return generator.generateKey();
     }
 
     private static final class Lazy {
