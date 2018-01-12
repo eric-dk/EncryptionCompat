@@ -9,6 +9,7 @@ import java.security.GeneralSecurityException;
 import java.security.Key;
 import java.security.KeyStore;
 import javax.crypto.KeyGenerator;
+import static android.util.Base64.DEFAULT;
 
 @TargetApi(23)
 final class EncryptionApi23Impl extends EncryptionBaseImpl {
@@ -19,47 +20,46 @@ final class EncryptionApi23Impl extends EncryptionBaseImpl {
 
     private EncryptionApi23Impl() {
         try {
-            KeyStore keyStore = KeyStore.getInstance(KEY_PROVIDER);
-            keyStore.load(null);
-
-            if (keyStore.containsAlias(MASTER_KEY)) {
-                key = keyStore.getKey(MASTER_KEY, null);
-            } else {
-                key = createKey();
-            }
+            key = getKey();
         } catch (GeneralSecurityException | IOException e) {
             throw new EncryptionException(e);
         }
     }
 
-    private Key createKey() throws GeneralSecurityException, IOException {
-        KeyGenerator generator = KeyGenerator.getInstance("AES", KEY_PROVIDER);
-        KeyGenParameterSpec spec = new KeyGenParameterSpec.Builder(MASTER_KEY,
-                KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT)
-                .setBlockModes(KeyProperties.BLOCK_MODE_CBC)
-                .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_PKCS7)
-                .build();
+    private Key getKey() throws GeneralSecurityException, IOException {
+        KeyStore keyStore = KeyStore.getInstance(KEY_PROVIDER);
+        keyStore.load(null);
 
-        generator.init(spec);
-        return generator.generateKey();
+        Key result = keyStore.getKey(MASTER_KEY, null);
+        if (result == null) {
+            KeyGenerator generator = KeyGenerator.getInstance(KEY_ALGORITHM, KEY_PROVIDER);
+            KeyGenParameterSpec spec = new KeyGenParameterSpec.Builder(MASTER_KEY,
+                    KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT)
+                    .setBlockModes(KeyProperties.BLOCK_MODE_CBC)
+                    .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_PKCS7)
+                    .build();
+            generator.init(spec);
+            result = generator.generateKey();
+        }
+        return result;
     }
 
     static EncryptionApi23Impl get() {
         return Holder.SINGLETON;
     }
 
-    synchronized String encrypt(String data) throws EncryptionException {
+    String encrypt(String data) throws EncryptionException {
         return encrypt(key, data.getBytes());
     }
 
-    synchronized String decrypt(String data) throws EncryptionException {
+    String decrypt(String data) throws EncryptionException {
         String[] fields = data.split(FIELD_SEPARATOR);
         if (fields.length != 2) {
             throw new EncryptionException("Invalid format");
         }
 
-        byte[] iv = Base64.decode(fields[0], Base64.DEFAULT);
-        byte[] cipherText = Base64.decode(fields[1], Base64.DEFAULT);
+        byte[] iv = Base64.decode(fields[0], DEFAULT);
+        byte[] cipherText = Base64.decode(fields[1], DEFAULT);
         return decrypt(key, iv, cipherText);
     }
 

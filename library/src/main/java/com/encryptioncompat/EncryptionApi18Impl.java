@@ -2,8 +2,25 @@ package com.encryptioncompat;
 
 import android.annotation.TargetApi;
 import android.content.Context;
+import android.security.KeyPairGeneratorSpec;
 import android.util.Base64;
+import java.io.IOException;
+import java.math.BigInteger;
+import java.security.GeneralSecurityException;
 import java.security.Key;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.KeyStore;
+import java.security.PrivateKey;
+import java.security.cert.Certificate;
+import java.util.Calendar;
+import javax.crypto.Cipher;
+import javax.crypto.KeyGenerator;
+import javax.security.auth.x500.X500Principal;
+import static android.util.Base64.DEFAULT;
+import static javax.crypto.Cipher.SECRET_KEY;
+import static javax.crypto.Cipher.UNWRAP_MODE;
+import static javax.crypto.Cipher.WRAP_MODE;
 
 @TargetApi(18)
 final class EncryptionApi18Impl extends EncryptionBaseImpl {
@@ -12,10 +29,44 @@ final class EncryptionApi18Impl extends EncryptionBaseImpl {
 
     private static volatile EncryptionApi18Impl singleton;
 
-    private final Key key;
+    private final Cipher cipher;
+    private final KeyPair keyPair;
 
     private EncryptionApi18Impl(Context context) {
-        key = null;
+        try {
+            cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
+            keyPair = getKeyPair(context);
+        } catch (GeneralSecurityException | IOException e) {
+            throw new EncryptionException(e);
+        }
+    }
+
+    private KeyPair getKeyPair(Context context) throws GeneralSecurityException, IOException {
+        KeyStore keyStore = KeyStore.getInstance(KEY_PROVIDER);
+        keyStore.load(null);
+
+        Certificate publicCert = keyStore.getCertificate(MASTER_KEY);
+        Key privateKey = keyStore.getKey(MASTER_KEY, null);
+
+        if (publicCert == null || !(privateKey instanceof PrivateKey)) {
+            Calendar startTime = Calendar.getInstance();
+            Calendar endTime = Calendar.getInstance();
+            endTime.add(Calendar.YEAR, 20);
+
+            KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA", KEY_PROVIDER);
+            KeyPairGeneratorSpec spec = new KeyPairGeneratorSpec.Builder(context)
+                    .setAlias(MASTER_KEY)
+                    .setSerialNumber(BigInteger.ONE)
+                    .setSubject(new X500Principal("CN=" + MASTER_KEY + " CA Certificate"))
+                    .setStartDate(startTime.getTime())
+                    .setEndDate(endTime.getTime())
+                    .build();
+
+            generator.initialize(spec);
+            return generator.generateKeyPair();
+        } else {
+            return new KeyPair(publicCert.getPublicKey(), (PrivateKey)privateKey);
+        }
     }
 
     static EncryptionApi18Impl get(Context context) {
@@ -31,18 +82,37 @@ final class EncryptionApi18Impl extends EncryptionBaseImpl {
         return instance;
     }
 
-    synchronized String encrypt(String data) throws EncryptionException {
-        return encrypt(key, data.getBytes());
+    String encrypt(String data) throws EncryptionException {
+        Key key;
+        String keyString;
+        try {
+            key = KeyGenerator.getInstance(KEY_ALGORITHM).generateKey();
+            cipher.init(WRAP_MODE, keyPair.getPublic());
+            keyString = Base64.encodeToString(cipher.wrap(key), DEFAULT);
+        } catch (GeneralSecurityException e) {
+            throw new EncryptionException(e);
+        }
+        String result = encrypt(key, data.getBytes());
+        return keyString + FIELD_SEPARATOR + result;
     }
 
-    synchronized String decrypt(String data) throws EncryptionException {
+    String decrypt(String data) throws EncryptionException {
         String[] fields = data.split(FIELD_SEPARATOR);
-        if (fields.length != 2) {
+        if (fields.length != 3) {
             throw new EncryptionException("Invalid format");
         }
 
-        byte[] iv = Base64.decode(fields[0], Base64.DEFAULT);
-        byte[] cipherText = Base64.decode(fields[1], Base64.DEFAULT);
+        byte[] keyText = Base64.decode(fields[0], DEFAULT);
+        byte[] iv = Base64.decode(fields[1], DEFAULT);
+        byte[] cipherText = Base64.decode(fields[2], DEFAULT);
+
+        Key key;
+        try {
+            cipher.init(UNWRAP_MODE, keyPair.getPrivate());
+            key = cipher.unwrap(keyText, KEY_ALGORITHM, SECRET_KEY);
+        } catch (GeneralSecurityException e) {
+            throw new EncryptionException(e);
+        }
         return decrypt(key, iv, cipherText);
     }
 }

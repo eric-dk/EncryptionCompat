@@ -11,6 +11,7 @@ import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 import static android.content.Context.MODE_PRIVATE;
+import static android.util.Base64.DEFAULT;
 
 final class EncryptionApi14Impl extends EncryptionBaseImpl {
     private static final int ITERATION_COUNT = 1000;
@@ -42,7 +43,7 @@ final class EncryptionApi14Impl extends EncryptionBaseImpl {
     private String createPassword(SharedPreferences prefs) {
         byte[] bytes = new byte[128];
         random.nextBytes(bytes);
-        String result = Base64.encodeToString(bytes, Base64.DEFAULT);
+        String result = Base64.encodeToString(bytes, DEFAULT);
 
         prefs.edit().putString(MASTER_KEY, result).apply();
         return result;
@@ -61,10 +62,10 @@ final class EncryptionApi14Impl extends EncryptionBaseImpl {
         return instance;
     }
 
-    synchronized String encrypt(String data) throws EncryptionException {
+    String encrypt(String data) throws EncryptionException {
         byte[] salt = new byte[SALT_LENGTH];
         random.nextBytes(salt);
-        String saltString = Base64.encodeToString(salt, Base64.DEFAULT);
+        String saltString = Base64.encodeToString(salt, DEFAULT);
 
         Key key;
         try {
@@ -76,15 +77,15 @@ final class EncryptionApi14Impl extends EncryptionBaseImpl {
         return saltString + FIELD_SEPARATOR + result;
     }
 
-    synchronized String decrypt(String data) throws EncryptionException {
+    String decrypt(String data) throws EncryptionException {
         String[] fields = data.split(FIELD_SEPARATOR);
         if (fields.length != 3) {
             throw new EncryptionException("Invalid format");
         }
 
-        byte[] salt = Base64.decode(fields[0], Base64.DEFAULT);
-        byte[] iv = Base64.decode(fields[1], Base64.DEFAULT);
-        byte[] cipherText = Base64.decode(fields[2], Base64.DEFAULT);
+        byte[] salt = Base64.decode(fields[0], DEFAULT);
+        byte[] iv = Base64.decode(fields[1], DEFAULT);
+        byte[] cipherText = Base64.decode(fields[2], DEFAULT);
 
         Key key;
         try {
@@ -98,6 +99,6 @@ final class EncryptionApi14Impl extends EncryptionBaseImpl {
     private Key getKey(byte[] salt) throws GeneralSecurityException {
         KeySpec spec = new PBEKeySpec(password, salt, ITERATION_COUNT, KEY_LENGTH);
         byte[] encoded = factory.generateSecret(spec).getEncoded();
-        return new SecretKeySpec(encoded, "AES");
+        return new SecretKeySpec(encoded, KEY_ALGORITHM);
     }
 }
