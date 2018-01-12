@@ -11,7 +11,7 @@ abstract class EncryptionBaseImpl {
     static final String FIELD_SEPARATOR = "]";
 
     private final Cipher cipher;
-    private final SecureRandom random;
+    final SecureRandom random;
 
     EncryptionBaseImpl() {
         try {
@@ -50,9 +50,5 @@ abstract class EncryptionBaseImpl {
             throw new EncryptionException(e);
         }
         return result;
-    }
-
-    SecureRandom getRandom() {
-        return random;
     }
 }
