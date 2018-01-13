@@ -26,7 +26,7 @@ abstract class EncryptionBaseImpl {
         random = new SecureRandom();
     }
 
-    final String encrypt(Key key, byte[] plainText) throws EncryptionException {
+    final String encrypt(Key key, byte[] plainText) {
         byte[] iv = new byte[cipher.getBlockSize()];
         random.nextBytes(iv);
         String ivString = Base64.encodeToString(iv, DEFAULT);
@@ -44,7 +44,7 @@ abstract class EncryptionBaseImpl {
         }
     }
 
-    final String decrypt(Key key, byte[] iv, byte[] cipherText) throws EncryptionException {
+    final String decrypt(Key key, byte[] iv, byte[] cipherText) {
         synchronized (EncryptionCompat.class) {
             String result;
             try {

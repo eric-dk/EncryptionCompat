@@ -1,6 +1,6 @@
 package com.encryptioncompat;
 
-public class EncryptionException extends RuntimeException {
+class EncryptionException extends RuntimeException {
     EncryptionException(String message) {
         super(message);
     }

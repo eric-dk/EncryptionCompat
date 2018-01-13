@@ -2,6 +2,7 @@ package com.encryptioncompat;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.support.annotation.GuardedBy;
 import android.util.Base64;
 import java.security.GeneralSecurityException;
 import java.security.Key;
@@ -21,6 +22,7 @@ final class EncryptionApi14Impl extends EncryptionBaseImpl {
     private static final String MASTER_KEY   = EncryptionApi14Impl.class.getSimpleName();
     private static final String PREFS_NAME   = EncryptionCompat.class.getSimpleName();
 
+    @GuardedBy("EncryptionApi14Impl")
     private static volatile EncryptionApi14Impl singleton;
 
     private final char[] password;
@@ -29,9 +31,9 @@ final class EncryptionApi14Impl extends EncryptionBaseImpl {
     private EncryptionApi14Impl(Context context) {
         SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
         if (prefs.contains(MASTER_KEY)) {
-            password = prefs.getString(MASTER_KEY, createPassword(prefs)).toCharArray();
+            password = prefs.getString(MASTER_KEY, MASTER_KEY).toCharArray();
         } else {
-            password = createPassword(prefs).toCharArray();
+            password = createPassword(prefs);
         }
         try {
             factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
@@ -40,13 +42,13 @@ final class EncryptionApi14Impl extends EncryptionBaseImpl {
         }
     }
 
-    private String createPassword(SharedPreferences prefs) {
+    private char[] createPassword(SharedPreferences prefs) {
         byte[] bytes = new byte[128];
         random.nextBytes(bytes);
         String result = Base64.encodeToString(bytes, DEFAULT);
 
         prefs.edit().putString(MASTER_KEY, result).apply();
-        return result;
+        return result.toCharArray();
     }
 
     static EncryptionApi14Impl get(Context context) {
@@ -62,7 +64,7 @@ final class EncryptionApi14Impl extends EncryptionBaseImpl {
         return instance;
     }
 
-    String encrypt(String data) throws EncryptionException {
+    String encrypt(String data) {
         byte[] salt = new byte[SALT_LENGTH];
         random.nextBytes(salt);
         String saltString = Base64.encodeToString(salt, DEFAULT);
@@ -77,7 +79,7 @@ final class EncryptionApi14Impl extends EncryptionBaseImpl {
         return saltString + FIELD_SEPARATOR + result;
     }
 
-    String decrypt(String data) throws EncryptionException {
+    String decrypt(String data) {
         String[] fields = data.split(FIELD_SEPARATOR);
         if (fields.length != 3) {
             throw new EncryptionException("Invalid format");

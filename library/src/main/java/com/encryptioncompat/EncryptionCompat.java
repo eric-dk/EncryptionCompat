@@ -1,8 +1,10 @@
 package com.encryptioncompat;
 
 import android.content.Context;
-import android.os.Build;
 import android.support.annotation.NonNull;
+import static android.os.Build.VERSION.SDK_INT;
+import static android.os.Build.VERSION_CODES.JELLY_BEAN_MR2;
+import static android.os.Build.VERSION_CODES.M;
 
 public final class EncryptionCompat {
     private static final String AES_KEYSTORE = "0";
@@ -14,14 +16,12 @@ public final class EncryptionCompat {
                                  @NonNull Context context) throws EncryptionException {
         if (data.isEmpty()) {
             return data;
-        }
-        switch (Build.VERSION.SDK_INT) {
-            case 23:
-                return AES_KEYSTORE + EncryptionApi23Impl.get().encrypt(data);
-            case 18:
-                return RSA_KEYSTORE + EncryptionApi18Impl.get(context).encrypt(data);
-            default:
-                return SHARED_PREFS + EncryptionApi14Impl.get(context).encrypt(data);
+        } else if (SDK_INT >= M) {
+            return AES_KEYSTORE + EncryptionApi23Impl.get().encrypt(data);
+        } else if (SDK_INT >= JELLY_BEAN_MR2) {
+            return RSA_KEYSTORE + EncryptionApi18Impl.get(context).encrypt(data);
+        } else {
+            return SHARED_PREFS + EncryptionApi14Impl.get(context).encrypt(data);
         }
     }
 
@@ -35,21 +35,19 @@ public final class EncryptionCompat {
         String encoded = data.substring(1);
         switch (mode) {
             case AES_KEYSTORE:
-                requireApi(23);
-                return EncryptionApi23Impl.get().decrypt(encoded);
+                if (SDK_INT >= M) {
+                    return EncryptionApi23Impl.get().decrypt(encoded);
+                }
+                throw new EncryptionException("Requires Marshmallow");
             case RSA_KEYSTORE:
-                requireApi(18);
-                return EncryptionApi18Impl.get(context).decrypt(encoded);
+                if (SDK_INT >= JELLY_BEAN_MR2) {
+                    return EncryptionApi18Impl.get(context).decrypt(encoded);
+                }
+                throw new EncryptionException("Requires Jelly Bean MR2");
             case SHARED_PREFS:
                 return EncryptionApi14Impl.get(context).decrypt(encoded);
             default:
                 throw new EncryptionException("Unknown encryption");
-        }
-    }
-
-    private static void requireApi(int level) throws EncryptionException {
-        if (Build.VERSION.SDK_INT < level) {
-            throw new EncryptionException("Requires API " + level);
         }
     }
 }

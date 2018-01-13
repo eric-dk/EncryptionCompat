@@ -1,17 +1,18 @@
 package com.encryptioncompat;
 
-import android.annotation.TargetApi;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
+import android.support.annotation.RequiresApi;
 import android.util.Base64;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.Key;
 import java.security.KeyStore;
 import javax.crypto.KeyGenerator;
+import static android.os.Build.VERSION_CODES.M;
 import static android.util.Base64.DEFAULT;
 
-@TargetApi(23)
+@RequiresApi(M)
 final class EncryptionApi23Impl extends EncryptionBaseImpl {
     private static final String KEY_PROVIDER = "AndroidKeyStore";
     private static final String MASTER_KEY   = EncryptionApi23Impl.class.getSimpleName();
@@ -38,6 +39,7 @@ final class EncryptionApi23Impl extends EncryptionBaseImpl {
                     .setBlockModes(KeyProperties.BLOCK_MODE_CBC)
                     .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_PKCS7)
                     .build();
+
             generator.init(spec);
             result = generator.generateKey();
         }
@@ -48,11 +50,11 @@ final class EncryptionApi23Impl extends EncryptionBaseImpl {
         return Holder.SINGLETON;
     }
 
-    String encrypt(String data) throws EncryptionException {
+    String encrypt(String data) {
         return encrypt(key, data.getBytes());
     }
 
-    String decrypt(String data) throws EncryptionException {
+    String decrypt(String data) {
         String[] fields = data.split(FIELD_SEPARATOR);
         if (fields.length != 2) {
             throw new EncryptionException("Invalid format");

@@ -1,8 +1,9 @@
 package com.encryptioncompat;
 
-import android.annotation.TargetApi;
 import android.content.Context;
 import android.security.KeyPairGeneratorSpec;
+import android.support.annotation.GuardedBy;
+import android.support.annotation.RequiresApi;
 import android.util.Base64;
 import java.io.IOException;
 import java.math.BigInteger;
@@ -17,16 +18,18 @@ import java.util.Calendar;
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
 import javax.security.auth.x500.X500Principal;
+import static android.os.Build.VERSION_CODES.JELLY_BEAN_MR2;
 import static android.util.Base64.DEFAULT;
 import static javax.crypto.Cipher.SECRET_KEY;
 import static javax.crypto.Cipher.UNWRAP_MODE;
 import static javax.crypto.Cipher.WRAP_MODE;
 
-@TargetApi(18)
+@RequiresApi(JELLY_BEAN_MR2)
 final class EncryptionApi18Impl extends EncryptionBaseImpl {
     private static final String KEY_PROVIDER = "AndroidKeyStore";
     private static final String MASTER_KEY   = EncryptionApi18Impl.class.getSimpleName();
 
+    @GuardedBy("EncryptionApi18Impl")
     private static volatile EncryptionApi18Impl singleton;
 
     private final Cipher cipher;
@@ -82,7 +85,7 @@ final class EncryptionApi18Impl extends EncryptionBaseImpl {
         return instance;
     }
 
-    String encrypt(String data) throws EncryptionException {
+    String encrypt(String data) {
         Key key;
         String keyString;
         try {
@@ -96,7 +99,7 @@ final class EncryptionApi18Impl extends EncryptionBaseImpl {
         return keyString + FIELD_SEPARATOR + result;
     }
 
-    String decrypt(String data) throws EncryptionException {
+    String decrypt(String data) {
         String[] fields = data.split(FIELD_SEPARATOR);
         if (fields.length != 3) {
             throw new EncryptionException("Invalid format");
