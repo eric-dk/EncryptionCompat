@@ -2,7 +2,6 @@ package com.encryptioncompat;
 
 import android.content.Context;
 import android.security.KeyPairGeneratorSpec;
-import android.support.annotation.GuardedBy;
 import android.support.annotation.RequiresApi;
 import android.util.Base64;
 import java.io.IOException;
@@ -29,7 +28,6 @@ final class EncryptionApi18Impl extends EncryptionBaseImpl {
     private static final String KEY_PROVIDER = "AndroidKeyStore";
     private static final String MASTER_KEY   = EncryptionApi18Impl.class.getSimpleName();
 
-    @GuardedBy("EncryptionApi18Impl")
     private static volatile EncryptionApi18Impl singleton;
 
     private final Cipher cipher;

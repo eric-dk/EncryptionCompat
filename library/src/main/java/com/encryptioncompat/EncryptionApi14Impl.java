@@ -2,7 +2,6 @@ package com.encryptioncompat;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.support.annotation.GuardedBy;
 import android.util.Base64;
 import java.security.GeneralSecurityException;
 import java.security.Key;
@@ -22,19 +21,13 @@ final class EncryptionApi14Impl extends EncryptionBaseImpl {
     private static final String MASTER_KEY   = EncryptionApi14Impl.class.getSimpleName();
     private static final String PREFS_NAME   = EncryptionCompat.class.getSimpleName();
 
-    @GuardedBy("EncryptionApi14Impl")
     private static volatile EncryptionApi14Impl singleton;
 
     private final char[] password;
     private final SecretKeyFactory factory;
 
     private EncryptionApi14Impl(Context context) {
-        SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
-        if (prefs.contains(MASTER_KEY)) {
-            password = prefs.getString(MASTER_KEY, MASTER_KEY).toCharArray();
-        } else {
-            password = createPassword(prefs);
-        }
+        password = getPassword(context);
         try {
             factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
         } catch (NoSuchAlgorithmException e) {
@@ -42,12 +35,16 @@ final class EncryptionApi14Impl extends EncryptionBaseImpl {
         }
     }
 
-    private char[] createPassword(SharedPreferences prefs) {
-        byte[] bytes = new byte[128];
-        random.nextBytes(bytes);
-        String result = Base64.encodeToString(bytes, DEFAULT);
+    private char[] getPassword(Context context) {
+        SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        String result = prefs.getString(MASTER_KEY, null);
 
-        prefs.edit().putString(MASTER_KEY, result).apply();
+        if (result == null) {
+            byte[] bytes = new byte[128];
+            random.nextBytes(bytes);
+            result = Base64.encodeToString(bytes, DEFAULT);
+            prefs.edit().putString(MASTER_KEY, result).apply();
+        }
         return result.toCharArray();
     }
 
