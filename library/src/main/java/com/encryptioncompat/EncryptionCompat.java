@@ -31,6 +31,7 @@ public final class EncryptionCompat {
         if (data.isEmpty()) {
             return data;
         }
+
         String mode = data.substring(0, 1);
         String encoded = data.substring(1);
         switch (mode) {
