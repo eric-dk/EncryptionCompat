@@ -2,14 +2,15 @@ package com.encryptioncompat;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
+import android.support.annotation.VisibleForTesting;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.JELLY_BEAN_MR2;
 import static android.os.Build.VERSION_CODES.M;
 
 public final class EncryptionCompat {
-    private static final String AES_KEYSTORE = "0";
-    private static final String RSA_KEYSTORE = "1";
-    private static final String SHARED_PREFS = "2";
+    @VisibleForTesting static final String AES_KEYSTORE = "0";
+    @VisibleForTesting static final String RSA_KEYSTORE = "1";
+    @VisibleForTesting static final String SHARED_PREFS = "2";
 
     @NonNull
     public static String encrypt(@NonNull String data,

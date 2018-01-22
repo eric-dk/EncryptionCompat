@@ -66,6 +66,6 @@ final class EncryptionApi23Impl extends EncryptionBaseImpl {
     }
 
     private static final class Holder {
-        static final EncryptionApi23Impl SINGLETON = new EncryptionApi23Impl();
+        private static final EncryptionApi23Impl SINGLETON = new EncryptionApi23Impl();
     }
 }

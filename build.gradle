@@ -2,14 +2,16 @@ buildscript {
     ext {
         versions = [
                 android: [
-                        buildTools: '27.0.3'
+                        buildTools: '27.0.3',
+                        support   : '27.0.2'
                 ],
                 sdk: [
                         minimum: 14,
                         target:  27
                 ],
                 test: [
-                        junit: '4.12'
+                        junit: '4.12',
+                        runner: "1.0.1",
                 ]
         ]
     }

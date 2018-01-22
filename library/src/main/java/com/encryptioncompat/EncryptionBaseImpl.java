@@ -27,34 +27,33 @@ abstract class EncryptionBaseImpl {
     }
 
     final String encrypt(Key key, byte[] plainText) {
-        byte[] iv = new byte[cipher.getBlockSize()];
-        random.nextBytes(iv);
-        String ivString = Base64.encodeToString(iv, DEFAULT);
-
         synchronized (EncryptionCompat.class) {
-            String result;
+            byte[] iv;
+            byte[] cipherText;
             try {
-                cipher.init(ENCRYPT_MODE, key, new IvParameterSpec(iv));
-                byte[] cipherText = cipher.doFinal(plainText);
-                result = Base64.encodeToString(cipherText, DEFAULT);
+                cipher.init(ENCRYPT_MODE, key);
+                iv = cipher.getIV();
+                cipherText = cipher.doFinal(plainText);
             } catch (GeneralSecurityException e) {
                 throw new EncryptionException(e);
             }
+
+            String ivString = Base64.encodeToString(iv, DEFAULT);
+            String result = Base64.encodeToString(cipherText, DEFAULT);
             return ivString + FIELD_SEPARATOR + result;
         }
     }
 
     final String decrypt(Key key, byte[] iv, byte[] cipherText) {
         synchronized (EncryptionCompat.class) {
-            String result;
+            byte[] plainText;
             try {
                 cipher.init(DECRYPT_MODE, key, new IvParameterSpec(iv));
-                byte[] plainText = cipher.doFinal(cipherText);
-                result = new String(plainText);
+                plainText = cipher.doFinal(cipherText);
             } catch (GeneralSecurityException e) {
                 throw new EncryptionException(e);
             }
-            return result;
+            return new String(plainText);
         }
     }
 }

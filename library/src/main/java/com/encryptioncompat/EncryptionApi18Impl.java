@@ -84,15 +84,17 @@ final class EncryptionApi18Impl extends EncryptionBaseImpl {
     }
 
     String encrypt(String data) {
+        byte[] wrappedKey;
         Key key;
-        String keyString;
         try {
             key = KeyGenerator.getInstance(KEY_ALGORITHM).generateKey();
             cipher.init(WRAP_MODE, keyPair.getPublic());
-            keyString = Base64.encodeToString(cipher.wrap(key), DEFAULT);
+            wrappedKey = cipher.wrap(key);
         } catch (GeneralSecurityException e) {
             throw new EncryptionException(e);
         }
+
+        String keyString = Base64.encodeToString(wrappedKey, DEFAULT);
         String result = encrypt(key, data.getBytes());
         return keyString + FIELD_SEPARATOR + result;
     }
