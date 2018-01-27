@@ -13,7 +13,9 @@ import javax.crypto.spec.SecretKeySpec;
 import static android.content.Context.MODE_PRIVATE;
 import static android.util.Base64.DEFAULT;
 
-final class EncryptionApi14Impl extends EncryptionBaseImpl {
+class EncryptionApi14Impl extends EncryptionBaseImpl {
+    private static final Object LOCK         = new Object();
+
     private static final int ITERATION_COUNT = 1000;
     private static final int KEY_LENGTH      = 256;
     private static final int SALT_LENGTH     = KEY_LENGTH / 8;
@@ -97,7 +99,10 @@ final class EncryptionApi14Impl extends EncryptionBaseImpl {
 
     private Key getKey(byte[] salt) throws GeneralSecurityException {
         KeySpec spec = new PBEKeySpec(password, salt, ITERATION_COUNT, KEY_LENGTH);
-        byte[] encoded = factory.generateSecret(spec).getEncoded();
+        byte[] encoded;
+        synchronized (LOCK) {
+            encoded = factory.generateSecret(spec).getEncoded();
+        }
         return new SecretKeySpec(encoded, KEY_ALGORITHM);
     }
 }

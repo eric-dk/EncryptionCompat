@@ -12,7 +12,6 @@ import static android.os.Build.VERSION_CODES.JELLY_BEAN_MR1;
 import static android.os.Build.VERSION_CODES.JELLY_BEAN_MR2;
 import static android.os.Build.VERSION_CODES.LOLLIPOP_MR1;
 import static android.os.Build.VERSION_CODES.M;
-import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
@@ -33,7 +32,7 @@ public class EncryptionTest {
         // When
         String actual = EncryptionCompat.encrypt(data, context);
         // Then
-        assertThat(actual, is(equalTo(data)));
+        assertThat(actual, is(data));
     }
 
     @Test
@@ -43,7 +42,7 @@ public class EncryptionTest {
         // When
         String actual = EncryptionCompat.decrypt(data, context);
         // Then
-        assertThat(actual, is(equalTo(data)));
+        assertThat(actual, is(data));
     }
 
     @SdkSuppress(maxSdkVersion = JELLY_BEAN_MR1)
@@ -55,7 +54,7 @@ public class EncryptionTest {
         String encoded = EncryptionCompat.encrypt(data, context);
         String flag = encoded.substring(0, 1);
         // Then
-        assertThat(flag, is(equalTo(EncryptionCompat.SHARED_PREFS)));
+        assertThat(flag, is(EncryptionCompat.SHARED_PREFS));
     }
 
     @SdkSuppress(maxSdkVersion = LOLLIPOP_MR1, minSdkVersion = JELLY_BEAN_MR2)
@@ -67,7 +66,7 @@ public class EncryptionTest {
         String encoded = EncryptionCompat.encrypt(data, context);
         String flag = encoded.substring(0, 1);
         // Then
-        assertThat(flag, is(equalTo(EncryptionCompat.RSA_KEYSTORE)));
+        assertThat(flag, is(EncryptionCompat.RSA_KEYSTORE));
     }
 
     @SdkSuppress(minSdkVersion = M)
@@ -79,7 +78,7 @@ public class EncryptionTest {
         String encoded = EncryptionCompat.encrypt(data, context);
         String flag = encoded.substring(0, 1);
         // Then
-        assertThat(flag, is(equalTo(EncryptionCompat.AES_KEYSTORE)));
+        assertThat(flag, is(EncryptionCompat.AES_KEYSTORE));
     }
 
     @SdkSuppress(maxSdkVersion = JELLY_BEAN_MR1)
@@ -110,7 +109,7 @@ public class EncryptionTest {
         String encoded = EncryptionApi14Impl.get(context).encrypt(data);
         String decoded = EncryptionApi14Impl.get(context).decrypt(encoded);
         // Then
-        assertThat(decoded, is(equalTo(data)));
+        assertThat(decoded, is(data));
     }
 
     @SdkSuppress(minSdkVersion = JELLY_BEAN_MR2)
@@ -122,7 +121,7 @@ public class EncryptionTest {
         String encoded = EncryptionApi18Impl.get(context).encrypt(data);
         String decoded = EncryptionApi18Impl.get(context).decrypt(encoded);
         // Then
-        assertThat(decoded, is(equalTo(data)));
+        assertThat(decoded, is(data));
     }
 
     @SdkSuppress(minSdkVersion = M)
@@ -134,6 +133,6 @@ public class EncryptionTest {
         String encoded = EncryptionApi23Impl.get().encrypt(data);
         String decoded = EncryptionApi23Impl.get().decrypt(encoded);
         // Then
-        assertThat(decoded, is(equalTo(data)));
+        assertThat(decoded, is(data));
     }
 }

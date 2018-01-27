@@ -24,18 +24,22 @@ import static javax.crypto.Cipher.UNWRAP_MODE;
 import static javax.crypto.Cipher.WRAP_MODE;
 
 @RequiresApi(JELLY_BEAN_MR2)
-final class EncryptionApi18Impl extends EncryptionBaseImpl {
+class EncryptionApi18Impl extends EncryptionBaseImpl {
+    private static final Object LOCK         = new Object();
+
     private static final String KEY_PROVIDER = "AndroidKeyStore";
     private static final String MASTER_KEY   = EncryptionApi18Impl.class.getSimpleName();
 
     private static volatile EncryptionApi18Impl singleton;
 
     private final Cipher cipher;
+    private final Key key;
     private final KeyPair keyPair;
 
     private EncryptionApi18Impl(Context context) {
         try {
             cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
+            key = KeyGenerator.getInstance(KEY_ALGORITHM).generateKey();
             keyPair = getKeyPair(context);
         } catch (GeneralSecurityException | IOException e) {
             throw new EncryptionException(e);
@@ -73,7 +77,7 @@ final class EncryptionApi18Impl extends EncryptionBaseImpl {
     static EncryptionApi18Impl get(Context context) {
         EncryptionApi18Impl instance = singleton;
         if (instance == null) {
-            synchronized (EncryptionApi14Impl.class) {
+            synchronized (EncryptionApi18Impl.class) {
                 instance = singleton;
                 if (instance == null) {
                     singleton = instance = new EncryptionApi18Impl(context);
@@ -85,11 +89,11 @@ final class EncryptionApi18Impl extends EncryptionBaseImpl {
 
     String encrypt(String data) {
         byte[] wrappedKey;
-        Key key;
         try {
-            key = KeyGenerator.getInstance(KEY_ALGORITHM).generateKey();
-            cipher.init(WRAP_MODE, keyPair.getPublic());
-            wrappedKey = cipher.wrap(key);
+            synchronized (LOCK) {
+                cipher.init(WRAP_MODE, keyPair.getPublic());
+                wrappedKey = cipher.wrap(key);
+            }
         } catch (GeneralSecurityException e) {
             throw new EncryptionException(e);
         }
@@ -111,8 +115,10 @@ final class EncryptionApi18Impl extends EncryptionBaseImpl {
 
         Key key;
         try {
-            cipher.init(UNWRAP_MODE, keyPair.getPrivate());
-            key = cipher.unwrap(keyText, KEY_ALGORITHM, SECRET_KEY);
+            synchronized (LOCK) {
+                cipher.init(UNWRAP_MODE, keyPair.getPrivate());
+                key = cipher.unwrap(keyText, KEY_ALGORITHM, SECRET_KEY);
+            }
         } catch (GeneralSecurityException e) {
             throw new EncryptionException(e);
         }

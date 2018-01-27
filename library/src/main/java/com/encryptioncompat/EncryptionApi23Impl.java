@@ -13,7 +13,7 @@ import static android.os.Build.VERSION_CODES.M;
 import static android.util.Base64.DEFAULT;
 
 @RequiresApi(M)
-final class EncryptionApi23Impl extends EncryptionBaseImpl {
+class EncryptionApi23Impl extends EncryptionBaseImpl {
     private static final String KEY_PROVIDER = "AndroidKeyStore";
     private static final String MASTER_KEY   = EncryptionApi23Impl.class.getSimpleName();
 
