@@ -13,6 +13,7 @@ import static javax.crypto.Cipher.ENCRYPT_MODE;
 abstract class EncryptionBaseImpl {
     private static final Object LOCK    = new Object();
 
+    static final int KEY_SIZE           = 256;
     static final String KEY_ALGORITHM   = "AES";
     static final String FIELD_SEPARATOR = "]";
 

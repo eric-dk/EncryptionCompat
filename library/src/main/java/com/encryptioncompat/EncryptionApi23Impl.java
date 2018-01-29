@@ -38,6 +38,7 @@ class EncryptionApi23Impl extends EncryptionBaseImpl {
                     KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT)
                     .setBlockModes(KeyProperties.BLOCK_MODE_CBC)
                     .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_PKCS7)
+                    .setKeySize(KEY_SIZE)
                     .build();
 
             generator.init(spec);

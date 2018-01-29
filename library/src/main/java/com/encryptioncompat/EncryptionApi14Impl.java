@@ -14,14 +14,11 @@ import static android.content.Context.MODE_PRIVATE;
 import static android.util.Base64.DEFAULT;
 
 class EncryptionApi14Impl extends EncryptionBaseImpl {
-    private static final Object LOCK         = new Object();
+    private static final Object LOCK       = new Object();
 
-    private static final int ITERATION_COUNT = 1000;
-    private static final int KEY_LENGTH      = 256;
-    private static final int SALT_LENGTH     = KEY_LENGTH / 8;
-
-    private static final String MASTER_KEY   = EncryptionApi14Impl.class.getSimpleName();
-    private static final String PREFS_NAME   = EncryptionCompat.class.getSimpleName();
+    private static final int SALT_SIZE     = KEY_SIZE / 8;
+    private static final String MASTER_KEY = EncryptionApi14Impl.class.getSimpleName();
+    private static final String PREFS_NAME = EncryptionCompat.class.getSimpleName();
 
     private static volatile EncryptionApi14Impl singleton;
 
@@ -64,7 +61,7 @@ class EncryptionApi14Impl extends EncryptionBaseImpl {
     }
 
     String encrypt(String data) {
-        byte[] salt = new byte[SALT_LENGTH];
+        byte[] salt = new byte[SALT_SIZE];
         random.nextBytes(salt);
         String saltString = Base64.encodeToString(salt, DEFAULT);
 
@@ -98,7 +95,7 @@ class EncryptionApi14Impl extends EncryptionBaseImpl {
     }
 
     private Key getKey(byte[] salt) throws GeneralSecurityException {
-        KeySpec spec = new PBEKeySpec(password, salt, ITERATION_COUNT, KEY_LENGTH);
+        KeySpec spec = new PBEKeySpec(password, salt, 1000, KEY_SIZE);
         byte[] encoded;
         synchronized (LOCK) {
             encoded = factory.generateSecret(spec).getEncoded();

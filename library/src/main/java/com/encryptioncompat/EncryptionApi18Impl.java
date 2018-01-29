@@ -38,8 +38,11 @@ class EncryptionApi18Impl extends EncryptionBaseImpl {
 
     private EncryptionApi18Impl(Context context) {
         try {
+            KeyGenerator generator = KeyGenerator.getInstance(KEY_ALGORITHM);
+            generator.init(KEY_SIZE);
+
             cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
-            key = KeyGenerator.getInstance(KEY_ALGORITHM).generateKey();
+            key = generator.generateKey();
             keyPair = getKeyPair(context);
         } catch (GeneralSecurityException | IOException e) {
             throw new EncryptionException(e);
