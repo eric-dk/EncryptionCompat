@@ -3,7 +3,6 @@ package com.encryptioncompat;
 import android.util.Base64;
 import java.security.GeneralSecurityException;
 import java.security.Key;
-import java.security.SecureRandom;
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import static android.util.Base64.DEFAULT;
@@ -18,7 +17,6 @@ abstract class EncryptionBaseImpl {
     static final String FIELD_SEPARATOR = "]";
 
     private final Cipher cipher;
-    final SecureRandom random;
 
     EncryptionBaseImpl() {
         try {
@@ -26,7 +24,6 @@ abstract class EncryptionBaseImpl {
         } catch (GeneralSecurityException e) {
             throw new EncryptionException(e);
         }
-        random = new SecureRandom();
     }
 
     String encrypt(Key key, byte[] plainText) {

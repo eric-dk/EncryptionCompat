@@ -6,7 +6,7 @@ import android.util.Base64;
 import java.security.GeneralSecurityException;
 import java.security.Key;
 import java.security.NoSuchAlgorithmException;
-import java.security.spec.KeySpec;
+import java.security.SecureRandom;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
@@ -24,6 +24,7 @@ class EncryptionApi14Impl extends EncryptionBaseImpl {
 
     private final char[] password;
     private final SecretKeyFactory factory;
+    private final SecureRandom random;
 
     private EncryptionApi14Impl(Context context) {
         password = getPassword(context);
@@ -32,6 +33,7 @@ class EncryptionApi14Impl extends EncryptionBaseImpl {
         } catch (NoSuchAlgorithmException e) {
             throw new EncryptionException(e);
         }
+        random = new SecureRandom();
     }
 
     private char[] getPassword(Context context) {
@@ -95,7 +97,7 @@ class EncryptionApi14Impl extends EncryptionBaseImpl {
     }
 
     private Key getKey(byte[] salt) throws GeneralSecurityException {
-        KeySpec spec = new PBEKeySpec(password, salt, 1000, KEY_SIZE);
+        PBEKeySpec spec = new PBEKeySpec(password, salt, 1000, KEY_SIZE);
         byte[] encoded;
         synchronized (LOCK) {
             encoded = factory.generateSecret(spec).getEncoded();
