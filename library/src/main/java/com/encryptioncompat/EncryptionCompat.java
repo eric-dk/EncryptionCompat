@@ -30,6 +30,8 @@ public final class EncryptionCompat {
     @VisibleForTesting static final String RSA_KEYSTORE = "1";
     @VisibleForTesting static final String SHARED_PREFS = "2";
 
+    private EncryptionCompat() {}
+
     /**
      * Encrypts {@code data} with AES-256, CBC, PKCS7-padded key. Key management and security
      * differs depending on the Android version.
