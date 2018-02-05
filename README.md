@@ -31,7 +31,7 @@ repositories {
     maven { url 'https://jitpack.io' }
 }
 
-implementation 'com.github.eric-dk:EncryptionCompat:1.0.0'
+implementation 'com.github.eric-dk:EncryptionCompat:1.0.1'
 ```
 
 ## FAQ
@@ -50,6 +50,8 @@ The Android Support library only supports API level 14 and above. Also consider 
 
 ## Changelog
 
+* **1.0.1**
+    * More library support
 * **1.0.0**
     * Initial release
 
