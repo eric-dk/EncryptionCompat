@@ -14,10 +14,18 @@ android {
 }
 
 dependencies {
+    androidTestImplementation 'com.android.support.test:runner:1.0.1'
+    testImplementation 'junit:junit:4.12'
+
     // Android support
     implementation "com.android.support:support-annotations:${versions.android.support}"
+}
 
-    // Android test
-    androidTestCompile "com.android.support.test:runner:${versions.test.runner}"
-    testImplementation "junit:junit:${versions.test.junit}"
+task sources(type: Jar) {
+    from android.sourceSets.main.java.srcDirs
+    classifier = 'sources'
+}
+
+artifacts {
+    archives sources
 }

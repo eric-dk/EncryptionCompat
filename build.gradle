@@ -8,10 +8,6 @@ buildscript {
                 sdk: [
                         minimum: 14,
                         target:  27
-                ],
-                test: [
-                        junit: '4.12',
-                        runner: "1.0.1",
                 ]
         ]
     }

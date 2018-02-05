@@ -1,5 +1,4 @@
 !.idea/codeStyleSettings.xml
-!.idea/copyright/*.xml
 *.iml
 .DS_Store
 .gradle/

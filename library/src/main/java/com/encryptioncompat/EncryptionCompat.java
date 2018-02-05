@@ -17,6 +17,8 @@
 package com.encryptioncompat;
 
 import android.content.Context;
+import android.support.annotation.AnyThread;
+import android.support.annotation.CheckResult;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 import static android.os.Build.VERSION.SDK_INT;
@@ -36,6 +38,8 @@ public final class EncryptionCompat {
      * @param  context             For accessing shared preferences
      * @throws EncryptionException Can be rethrown exception
      */
+    @AnyThread
+    @CheckResult
     @NonNull
     public static String encrypt(@NonNull String data,
                                  @NonNull Context context) throws EncryptionException {
@@ -59,6 +63,8 @@ public final class EncryptionCompat {
      * @return                     May be invalid if stored key missing
      * @throws EncryptionException Can also be rethrown exception
      */
+    @AnyThread
+    @CheckResult
     @NonNull
     public static String decrypt(@NonNull String data,
                                  @NonNull Context context) throws EncryptionException {

@@ -18,6 +18,7 @@ package com.encryptioncompat;
 
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
+import android.support.annotation.NonNull;
 import android.support.annotation.RequiresApi;
 import android.util.Base64;
 import java.io.IOException;
@@ -63,15 +64,18 @@ class EncryptionApi23Impl extends EncryptionBaseImpl {
         return result;
     }
 
+    @NonNull
     static EncryptionApi23Impl get() {
         return Holder.SINGLETON;
     }
 
-    String encrypt(String data) {
+    @NonNull
+    String encrypt(@NonNull String data) {
         return encrypt(key, data.getBytes());
     }
 
-    String decrypt(String data) {
+    @NonNull
+    String decrypt(@NonNull String data) {
         String[] fields = data.split(FIELD_SEPARATOR);
         if (fields.length != 2) {
             throw new EncryptionException("Invalid format");

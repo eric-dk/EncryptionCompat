@@ -18,6 +18,7 @@ package com.encryptioncompat;
 
 import android.content.Context;
 import android.security.KeyPairGeneratorSpec;
+import android.support.annotation.NonNull;
 import android.support.annotation.RequiresApi;
 import android.util.Base64;
 import java.io.IOException;
@@ -93,6 +94,7 @@ class EncryptionApi18Impl extends EncryptionBaseImpl {
         }
     }
 
+    @NonNull
     static EncryptionApi18Impl get(Context context) {
         EncryptionApi18Impl instance = singleton;
         if (instance == null) {
@@ -106,7 +108,8 @@ class EncryptionApi18Impl extends EncryptionBaseImpl {
         return instance;
     }
 
-    String encrypt(String data) {
+    @NonNull
+    String encrypt(@NonNull String data) {
         byte[] wrappedKey;
         try {
             synchronized (LOCK) {
@@ -122,7 +125,8 @@ class EncryptionApi18Impl extends EncryptionBaseImpl {
         return keyString + FIELD_SEPARATOR + result;
     }
 
-    String decrypt(String data) {
+    @NonNull
+    String decrypt(@NonNull String data) {
         String[] fields = data.split(FIELD_SEPARATOR);
         if (fields.length != 3) {
             throw new EncryptionException("Invalid format");
