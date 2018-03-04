@@ -50,8 +50,10 @@ The Android Support library only supports API level 14 and above. Also consider 
 
 ## Changelog
 
+* **1.0.2**
+    * Improves sample behavior
 * **1.0.1**
-    * More library support
+    * Adds library annotations
 * **1.0.0**
     * Initial release
 
