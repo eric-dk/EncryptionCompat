@@ -16,6 +16,7 @@
 
 package com.encryptioncompat.sample;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -32,13 +33,13 @@ import butterknife.ButterKnife;
 import butterknife.OnClick;
 
 public class SampleActivity extends AppCompatActivity {
-    @BindView(R.id.inputText) TextView inputText;
-    @BindView(R.id.cipherText) TextView cipherText;
-    @BindView(R.id.plainText) TextView plainText;
+    @BindView(R.id.inputText) @SuppressWarnings("WeakerAccess") TextView inputText;
+    @BindView(R.id.cipherText) @SuppressWarnings("WeakerAccess") TextView cipherText;
+    @BindView(R.id.plainText) @SuppressWarnings("WeakerAccess") TextView plainText;
 
-    private final HandlerThread workerThread = new HandlerThread("Worker");
-    private Handler mainHandler;
-    private Handler workerHandler;
+    private final HandlerThread bgThread = new HandlerThread("Background");
+    private Handler bgHandler;
+    private Handler uiHandler;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,17 +47,8 @@ public class SampleActivity extends AppCompatActivity {
         setContentView(R.layout.activity_sample);
         ButterKnife.bind(this);
 
-        workerThread.start();
-        mainHandler = new Handler(Looper.getMainLooper()) {
-            @Override
-            public void handleMessage(Message msg) {
-                // noinspection unchecked
-                Pair<String, String> output = (Pair<String, String>)msg.obj;
-                cipherText.setText(output.first.trim());
-                plainText.setText(output.second.trim());
-            }
-        };
-        workerHandler = new Handler(workerThread.getLooper()) {
+        bgThread.start();
+        bgHandler = new Handler(bgThread.getLooper()) {
             @Override
             public void handleMessage(Message msg) {
                 String input = msg.obj.toString();
@@ -71,20 +63,34 @@ public class SampleActivity extends AppCompatActivity {
                 }
 
                 Pair<String, String> output = new Pair<>(encoded, decoded);
-                mainHandler.obtainMessage(0, output).sendToTarget();
+                uiHandler.obtainMessage(0, output).sendToTarget();
+            }
+        };
+        uiHandler = new Handler(Looper.getMainLooper()) {
+            @Override
+            public void handleMessage(Message msg) {
+                // noinspection unchecked
+                Pair<String, String> output = (Pair<String, String>)msg.obj;
+                cipherText.setText(output.first.trim());
+                plainText.setText(output.second.trim());
             }
         };
     }
 
     @Override
     protected void onDestroy() {
-        workerThread.quit();
         super.onDestroy();
+        bgThread.quit();
     }
 
     @OnClick(R.id.inputButton)
     void doEncrypt() {
         String input = inputText.getText().toString();
-        workerHandler.obtainMessage(0, input).sendToTarget();
+        bgHandler.obtainMessage(0, input).sendToTarget();
+    }
+
+    @Override
+    public void onBackPressed() {
+        startActivity(new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME));
     }
 }

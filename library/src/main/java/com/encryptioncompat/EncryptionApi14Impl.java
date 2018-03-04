@@ -18,7 +18,6 @@ package com.encryptioncompat;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.support.annotation.NonNull;
 import android.util.Base64;
 import java.security.GeneralSecurityException;
 import java.security.Key;
@@ -66,7 +65,6 @@ class EncryptionApi14Impl extends EncryptionBaseImpl {
         return result.toCharArray();
     }
 
-    @NonNull
     static EncryptionApi14Impl get(Context context) {
         EncryptionApi14Impl instance = singleton;
         if (instance == null) {
@@ -80,8 +78,7 @@ class EncryptionApi14Impl extends EncryptionBaseImpl {
         return instance;
     }
 
-    @NonNull
-    String encrypt(@NonNull String data) {
+    String encrypt(String data) {
         byte[] salt = new byte[SALT_SIZE];
         random.nextBytes(salt);
         String saltString = Base64.encodeToString(salt, DEFAULT);
@@ -96,8 +93,7 @@ class EncryptionApi14Impl extends EncryptionBaseImpl {
         return saltString + FIELD_SEPARATOR + result;
     }
 
-    @NonNull
-    String decrypt(@NonNull String data) {
+    String decrypt(String data) {
         String[] fields = data.split(FIELD_SEPARATOR);
         if (fields.length != 3) {
             throw new EncryptionException("Invalid format");
