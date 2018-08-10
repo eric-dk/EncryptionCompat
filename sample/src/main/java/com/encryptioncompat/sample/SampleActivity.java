@@ -58,8 +58,10 @@ public class SampleActivity extends AppCompatActivity {
                             runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    cipherText.setText(encoded);
-                                    plainText.setText(decoded);
+                                    if (!isFinishing()) {
+                                        cipherText.setText(encoded);
+                                        plainText.setText(decoded);
+                                    }
                                 }
                             });
                         } catch (EncryptionException e) {
