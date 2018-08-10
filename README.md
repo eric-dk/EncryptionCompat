@@ -2,26 +2,36 @@
 
 [![](https://jitpack.io/v/eric-dk/EncryptionCompat.svg)](https://jitpack.io/#eric-dk/EncryptionCompat)
 
-Android encryption simplified. Automatic key management, preferring secure hardware. Compatible across platform versions. Best for obfuscating sensitive data that for one reason or another exists on-device.
+Android encryption simplified. Automatic key management, preferring secure hardware. Backwards-compatible across platform versions. Best for obfuscating sensitive on-device data.
 
-**Please carefully consider your threat model before using EncryptionCompat**. Encryption alone is not a security solution. Keys, even when hardware-backed, can be [used maliciously](https://developer.android.com/training/articles/keystore.html#ExtractionPrevention). Assume that anything that touches a device can and will be compromised.
+**Please carefully consider your threat model**. Encryption alone is not a security solution. Keys, even if hardware-backed, can [be extracted](https://developer.android.com/training/articles/keystore.html#ExtractionPrevention). Any data that touches a client should be considered compromisable.
 
-Generally uses *AES-256*, *CBC*, *PKCS7-padded* keys, but key management differs depending on Android version.
+Keys are *AES-256*, *CBC*, *PKCS7-padded*, but key management differs depending on the specified platform version.
 
-* **Jelly Bean and below**: A per-input AES key is derived from a generated password, stored in shared preferences, and a random salt. The salt, [initialization vector](https://en.wikipedia.org/wiki/Initialization_vector), and ciphertext are encoded into the result.
+* **Jelly Bean and below**: Per-message key is generated from a password stored in [shared preferences](https://developer.android.com/training/data-storage/shared-preferences) and a random salt. Salt, initialization vector, and ciphertext are then encoded.
 
-* **KitKat through Lollipop**: A global AES key is wrapped with a RSA key, which is managed by the [Android Keystore](https://developer.android.com/training/articles/keystore.html) and may be hardware-backed. The wrapped key, initialization vector, and ciphertext are encoded into the result.
+* **KitKat through Lollipop**: Per-instance key is wrapped with a global RSA key saved to [the keystore](https://developer.android.com/training/articles/keystore.html). The keystore may be hardware-backed. Wrapped key, initialization vector, and ciphertext are then encoded.
 
-* **Marshmallow and above**: A global AES key is managed by Android Keystore, which may be hardware-backed. The initialization vector and ciphertext are encoded into the result.
+* **Marshmallow and above**: Global key is managed by the keystore. The keystore may be hardware-backed. Initialization vector and ciphertext are then encoded.
 
 ## Usage
 
+#### Initialization
 ```java
-String encrypted = EncryptionCompat.encrypt("foobar", context);
-String decrypted = EncryptionCompat.decrypt(encrypted, context);
+EncryptionCompat encryption = EncryptionCompat.newInstance();
+```
+For backwards-compatibility below Marshmallow
+```java
+EncryptionCompat encryption = EncryptionCompat.newInstance(minSdk, context);
 ```
 
-Encrypt and decrypt are thread-safe blocking operations, thus should be called on background thread(s). Any checked exceptions are rethrown as unchecked EncyptionException. Context is required for initialization.
+#### Data handling
+```java
+String encoded = encryption.encrypt("foobar");
+String decoded = encryption.decrypt(encoded);
+```
+
+Encryption and decryption are blocking, and should be executed on non-UI thread(s). Checked exceptions are rethrown as unchecked EncyptionException.
 
 ## Gradle
 
@@ -31,25 +41,24 @@ repositories {
     maven { url 'https://jitpack.io' }
 }
 
-implementation 'com.github.eric-dk:EncryptionCompat:1.0.1'
+implementation 'com.github.eric-dk:EncryptionCompat:2.0.0'
 ```
 
 ## FAQ
 
-#### Does it provide integrity protection?
-EncryptionCompat provides encrpytion, which only protects data confidentiality. Any data integrity checks should be implemented downstream.
+#### Is there integrity protection?
+No. EncryptionCompat provides data confidentiality only. Integrity checks should be implemented downstream.
 
 #### Are random values securely generated?
-Salts are randomized by [SecureRandom](https://developer.android.com/reference/java/security/SecureRandom.html), initialization vectors are populated by [Cipher](https://developer.android.com/reference/javax/crypto/Cipher.html); the former may have [weak entropy](https://android-developers.googleblog.com/2013/08/some-securerandom-thoughts.html), the latter may be [zero-byte filled](https://stackoverflow.com/a/31037133). These can be avoided by targeting newer versions of Android.
+Generally yes. Salt [randomization](https://developer.android.com/reference/java/security/SecureRandom.html) may have weak entropy depending [on manufacturer](https://android-developers.googleblog.com/2013/08/some-securerandom-thoughts.html). Initialization vector may be [zero-filled](https://stackoverflow.com/a/31037133) if [the cipher](https://developer.android.com/reference/javax/crypto/Cipher.html) is poorly implemented by the manufacturer.
 
-#### What if the user updates Android version?
-Decryption should reuse previous keys, although the Android Keystore can [forget them](https://doridori.github.io/android-security-the-forgetful-keystore/). Subsequent encryptions will create new keys if crossing implementations above.
-
-#### Why is the minimum SDK version set to API level 14?
-The Android Support library only supports API level 14 and above. Also consider the security implications of running Gingerbread in 2018.
+#### Will upgrading OS invalidate data?
+Generally no. Decryption should reuse previous keys assuming no loss [due to hardware](https://doridori.github.io/android-security-the-forgetful-keystore/). When crossing implementation boundaries subsequent encryption will generate new, more secure keys.
 
 ## Changelog
 
+* **2.0.0**
+    * Switches to non-static usage
 * **1.0.2**
     * Improves sample behavior
 * **1.0.1**
@@ -59,7 +68,8 @@ The Android Support library only supports API level 14 and above. Also consider 
 
 ## References
 
-Credit to Yakiv Mospan for an excellent [series of articles](https://proandroiddev.com/secure-data-in-android-encryption-7eda33e68f58) on encryption using Android Keystore. Note that it is currently incomplete as of early 2018. Thanks also to Nikolay Elenkov a [great post](https://nelenkov.blogspot.com/2012/04/using-password-based-encryption-on.html) on password-based encryption on Android.
+Credit to Yakiv Mospan for an excellent [series of articles](https://proandroiddev.com/secure-data-in-android-encryption-7eda33e68f58) on encryption using the keystore. 
+Credit to Nikolay Elenkov for a [great post](https://nelenkov.blogspot.com/2012/04/using-password-based-encryption-on.html) on Android password-based encryption.
 
 ## License
 
