@@ -18,75 +18,63 @@ package com.encryptioncompat.sample;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.HandlerThread;
-import android.os.Looper;
-import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.util.Pair;
+import android.view.View;
 import android.widget.TextView;
 import com.encryptioncompat.EncryptionCompat;
 import com.encryptioncompat.EncryptionException;
-import butterknife.BindView;
-import butterknife.ButterKnife;
-import butterknife.OnClick;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import static android.os.Build.VERSION_CODES.ICE_CREAM_SANDWICH;
 
 public class SampleActivity extends AppCompatActivity {
-    @BindView(R.id.inputText) @SuppressWarnings("WeakerAccess") TextView inputText;
-    @BindView(R.id.cipherText) @SuppressWarnings("WeakerAccess") TextView cipherText;
-    @BindView(R.id.plainText) @SuppressWarnings("WeakerAccess") TextView plainText;
-
-    private final HandlerThread bgThread = new HandlerThread("Background");
-    private Handler bgHandler;
-    private Handler uiHandler;
+    private EncryptionCompat encryption;
+    private ExecutorService executor;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sample);
-        ButterKnife.bind(this);
 
-        bgThread.start();
-        bgHandler = new Handler(bgThread.getLooper()) {
-            @Override
-            public void handleMessage(Message msg) {
-                String input = msg.obj.toString();
-                String encoded, decoded;
-                try {
-                    encoded = EncryptionCompat.encrypt(input, SampleActivity.this);
-                    decoded = EncryptionCompat.decrypt(encoded, SampleActivity.this);
-                } catch (EncryptionException e) {
-                    encoded = e.toString();
-                    decoded = "";
-                    Log.e(getString(R.string.name), encoded, e);
-                }
+        encryption = EncryptionCompat.newInstance(ICE_CREAM_SANDWICH, this);
+        executor = Executors.newSingleThreadExecutor();
 
-                Pair<String, String> output = new Pair<>(encoded, decoded);
-                uiHandler.obtainMessage(0, output).sendToTarget();
-            }
-        };
-        uiHandler = new Handler(Looper.getMainLooper()) {
+        final TextView inputText = findViewById(R.id.inputText);
+        final TextView cipherText = findViewById(R.id.cipherText);
+        final TextView plainText = findViewById(R.id.plainText);
+
+        findViewById(R.id.inputButton).setOnClickListener(new View.OnClickListener() {
             @Override
-            public void handleMessage(Message msg) {
-                // noinspection unchecked
-                Pair<String, String> output = (Pair<String, String>)msg.obj;
-                cipherText.setText(output.first.trim());
-                plainText.setText(output.second.trim());
+            public void onClick(View view) {
+                final String input = inputText.getText().toString();
+                executor.submit(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            final String encoded = encryption.encrypt(input).trim();
+                            final String decoded = encryption.decrypt(encoded).trim();
+
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    cipherText.setText(encoded);
+                                    plainText.setText(decoded);
+                                }
+                            });
+                        } catch (EncryptionException e) {
+                            Log.e(getString(R.string.name), e.toString(), e);
+                        }
+                    }
+                });
             }
-        };
+        });
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        bgThread.quit();
-    }
-
-    @OnClick(R.id.inputButton)
-    void doEncrypt() {
-        String input = inputText.getText().toString();
-        bgHandler.obtainMessage(0, input).sendToTarget();
+        executor.shutdown();
     }
 
     @Override

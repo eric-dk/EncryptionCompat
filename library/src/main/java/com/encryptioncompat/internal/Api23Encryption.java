@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-package com.encryptioncompat;
+package com.encryptioncompat.internal;
 
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
 import android.support.annotation.RequiresApi;
 import android.util.Base64;
+import com.encryptioncompat.EncryptionException;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.Key;
@@ -29,13 +30,13 @@ import static android.os.Build.VERSION_CODES.M;
 import static android.util.Base64.DEFAULT;
 
 @RequiresApi(M)
-class EncryptionApi23Impl extends EncryptionBaseImpl {
+public class Api23Encryption extends AbstractEncryption {
     private static final String KEY_PROVIDER = "AndroidKeyStore";
-    private static final String MASTER_KEY   = EncryptionApi23Impl.class.getSimpleName();
+    private static final String MASTER_KEY   = Api23Encryption.class.getSimpleName();
 
     private final Key key;
 
-    private EncryptionApi23Impl() {
+    public Api23Encryption() {
         try {
             key = getKey();
         } catch (GeneralSecurityException | IOException e) {
@@ -60,29 +61,20 @@ class EncryptionApi23Impl extends EncryptionBaseImpl {
             generator.init(spec);
             result = generator.generateKey();
         }
+
         return result;
     }
 
-    static EncryptionApi23Impl get() {
-        return Holder.SINGLETON;
+    public String encrypt(String input) {
+        return encrypt(key, input.getBytes());
     }
 
-    String encrypt(String data) {
-        return encrypt(key, data.getBytes());
-    }
-
-    String decrypt(String data) {
-        String[] fields = data.split(FIELD_SEPARATOR);
-        if (fields.length != 2) {
-            throw new EncryptionException("Invalid format");
-        }
+    public String decrypt(String input) {
+        String[] fields = input.split(FIELD_SEPARATOR);
+        if (fields.length != 2) throw new EncryptionException("Invalid format");
 
         byte[] iv = Base64.decode(fields[0], DEFAULT);
         byte[] cipherText = Base64.decode(fields[1], DEFAULT);
         return decrypt(key, iv, cipherText);
-    }
-
-    private static final class Holder {
-        private static final EncryptionApi23Impl SINGLETON = new EncryptionApi23Impl();
     }
 }

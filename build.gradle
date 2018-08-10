@@ -3,7 +3,7 @@ buildscript {
         versions = [
                 android: [
                         buildTools: '27.0.3',
-                        support   : '27.1.0'
+                        support   : '27.1.1'
                 ],
                 sdk: [
                         minimum: 14,
@@ -12,19 +12,19 @@ buildscript {
         ]
     }
     repositories {
-        google()
         jcenter()
+        google()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.0.1'
+        classpath 'com.android.tools.build:gradle:3.1.4'
         classpath 'com.github.dcendents:android-maven-gradle-plugin:2.0'
     }
 }
 
 allprojects {
     repositories {
-        google()
         jcenter()
+        google()
     }
 }
 

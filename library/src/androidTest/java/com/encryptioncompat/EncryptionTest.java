@@ -24,6 +24,7 @@ import android.support.test.runner.AndroidJUnit4;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import static android.os.Build.VERSION_CODES.ICE_CREAM_SANDWICH;
 import static android.os.Build.VERSION_CODES.JELLY_BEAN_MR1;
 import static android.os.Build.VERSION_CODES.JELLY_BEAN_MR2;
 import static android.os.Build.VERSION_CODES.LOLLIPOP_MR1;
@@ -34,52 +35,53 @@ import static org.junit.Assert.assertThat;
 @RunWith(AndroidJUnit4.class)
 @MediumTest
 public class EncryptionTest {
-    private Context context;
+    private EncryptionCompat encryption;
 
     @Before
     public void setup() {
-        context = InstrumentationRegistry.getTargetContext();
+        Context context = InstrumentationRegistry.getTargetContext();
+        encryption = EncryptionCompat.newInstance(ICE_CREAM_SANDWICH, context);
     }
 
     @Test
     public void testEncrypt_empty() {
         // Given
-        String data = "";
+        String input = "";
         // When
-        String actual = EncryptionCompat.encrypt(data, context);
+        String actual = encryption.encrypt(input);
         // Then
-        assertThat(actual, is(data));
+        assertThat(actual, is(input));
     }
 
     @Test
     public void testDecrypt_empty() {
         // Given
-        String data = "";
+        String input = "";
         // When
-        String actual = EncryptionCompat.decrypt(data, context);
+        String actual = encryption.decrypt(input);
         // Then
-        assertThat(actual, is(data));
+        assertThat(actual, is(input));
     }
 
     @SdkSuppress(maxSdkVersion = JELLY_BEAN_MR1)
     @Test
-    public void testEncrypt_impl14Flag() {
+    public void testEncrypt_api14Mode() {
         // Given
-        String data = "abc";
+        String input = "abc";
         // When
-        String encoded = EncryptionCompat.encrypt(data, context);
+        String encoded = encryption.encrypt(input);
         String flag = encoded.substring(0, 1);
         // Then
         assertThat(flag, is(EncryptionCompat.SHARED_PREFS));
     }
 
-    @SdkSuppress(maxSdkVersion = LOLLIPOP_MR1, minSdkVersion = JELLY_BEAN_MR2)
+    @SdkSuppress(minSdkVersion = JELLY_BEAN_MR2, maxSdkVersion = LOLLIPOP_MR1)
     @Test
-    public void testEncrypt_impl18Flag() {
+    public void testEncrypt_api18Mode() {
         // Given
-        String data = "abc";
+        String input = "abc";
         // When
-        String encoded = EncryptionCompat.encrypt(data, context);
+        String encoded = encryption.encrypt(input);
         String flag = encoded.substring(0, 1);
         // Then
         assertThat(flag, is(EncryptionCompat.RSA_KEYSTORE));
@@ -87,11 +89,11 @@ public class EncryptionTest {
 
     @SdkSuppress(minSdkVersion = M)
     @Test
-    public void testEncrypt_impl23Flag() {
+    public void testEncrypt_api23Mode() {
         // Given
-        String data = "abc";
+        String input = "abc";
         // When
-        String encoded = EncryptionCompat.encrypt(data, context);
+        String encoded = encryption.encrypt(input);
         String flag = encoded.substring(0, 1);
         // Then
         assertThat(flag, is(EncryptionCompat.AES_KEYSTORE));
@@ -99,56 +101,32 @@ public class EncryptionTest {
 
     @SdkSuppress(maxSdkVersion = JELLY_BEAN_MR1)
     @Test(expected = EncryptionException.class)
-    public void testDecrypt_impl14Invalid() {
+    public void testDecrypt_api14BadMode() {
         // Given
-        String data = EncryptionCompat.RSA_KEYSTORE;
+        String input = EncryptionCompat.RSA_KEYSTORE;
         // When
-        EncryptionCompat.decrypt(data, context);
+        encryption.decrypt(input);
         // Then
     }
 
     @SdkSuppress(maxSdkVersion = LOLLIPOP_MR1)
     @Test(expected = EncryptionException.class)
-    public void testDecrypt_impl18Invalid() {
+    public void testDecrypt_api18BadMode() {
         // Given
-        String data = EncryptionCompat.AES_KEYSTORE;
+        String input = EncryptionCompat.AES_KEYSTORE;
         // When
-        EncryptionCompat.decrypt(data, context);
+        encryption.decrypt(input);
         // Then
     }
 
     @Test
-    public void testEncryptDecrypt_impl14() {
+    public void testEncrypt_decrypt() {
         // Given
-        String data = "abc";
+        String input = "abc";
         // When
-        String encoded = EncryptionApi14Impl.get(context).encrypt(data);
-        String decoded = EncryptionApi14Impl.get(context).decrypt(encoded);
+        String encoded = encryption.encrypt(input);
+        String decoded = encryption.decrypt(encoded);
         // Then
-        assertThat(decoded, is(data));
-    }
-
-    @SdkSuppress(minSdkVersion = JELLY_BEAN_MR2)
-    @Test
-    public void testEncryptDecrypt_impl18() {
-        // Given
-        String data = "abc";
-        // When
-        String encoded = EncryptionApi18Impl.get(context).encrypt(data);
-        String decoded = EncryptionApi18Impl.get(context).decrypt(encoded);
-        // Then
-        assertThat(decoded, is(data));
-    }
-
-    @SdkSuppress(minSdkVersion = M)
-    @Test
-    public void testEncryptDecrypt_impl23() {
-        // Given
-        String data = "abc";
-        // When
-        String encoded = EncryptionApi23Impl.get().encrypt(data);
-        String decoded = EncryptionApi23Impl.get().decrypt(encoded);
-        // Then
-        assertThat(decoded, is(data));
+        assertThat(decoded, is(input));
     }
 }

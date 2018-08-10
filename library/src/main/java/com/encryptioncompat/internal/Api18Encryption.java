@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package com.encryptioncompat;
+package com.encryptioncompat.internal;
 
 import android.content.Context;
-import android.security.KeyPairGeneratorSpec;
 import android.support.annotation.RequiresApi;
 import android.util.Base64;
+import com.encryptioncompat.EncryptionException;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.security.GeneralSecurityException;
@@ -29,6 +29,7 @@ import java.security.KeyPairGenerator;
 import java.security.KeyStore;
 import java.security.PrivateKey;
 import java.security.cert.Certificate;
+import java.security.spec.AlgorithmParameterSpec;
 import java.util.Calendar;
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
@@ -40,19 +41,15 @@ import static javax.crypto.Cipher.UNWRAP_MODE;
 import static javax.crypto.Cipher.WRAP_MODE;
 
 @RequiresApi(JELLY_BEAN_MR2)
-class EncryptionApi18Impl extends EncryptionBaseImpl {
-    private static final Object LOCK         = new Object();
-
+public class Api18Encryption extends AbstractEncryption {
     private static final String KEY_PROVIDER = "AndroidKeyStore";
-    private static final String MASTER_KEY   = EncryptionApi18Impl.class.getSimpleName();
-
-    private static volatile EncryptionApi18Impl singleton;
+    private static final String MASTER_KEY   = Api18Encryption.class.getSimpleName();
 
     private final Cipher cipher;
     private final Key key;
     private final KeyPair keyPair;
 
-    private EncryptionApi18Impl(Context context) {
+    public Api18Encryption(Context context) throws EncryptionException {
         try {
             KeyGenerator generator = KeyGenerator.getInstance(KEY_ALGORITHM);
             generator.init(KEY_SIZE);
@@ -65,6 +62,7 @@ class EncryptionApi18Impl extends EncryptionBaseImpl {
         }
     }
 
+    @SuppressWarnings("deprecation")
     private KeyPair getKeyPair(Context context) throws GeneralSecurityException, IOException {
         KeyStore keyStore = KeyStore.getInstance(KEY_PROVIDER);
         keyStore.load(null);
@@ -77,8 +75,7 @@ class EncryptionApi18Impl extends EncryptionBaseImpl {
             Calendar endTime = Calendar.getInstance();
             endTime.add(Calendar.YEAR, 20);
 
-            KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA", KEY_PROVIDER);
-            KeyPairGeneratorSpec spec = new KeyPairGeneratorSpec.Builder(context)
+            AlgorithmParameterSpec spec = new android.security.KeyPairGeneratorSpec.Builder(context)
                     .setAlias(MASTER_KEY)
                     .setSerialNumber(BigInteger.ONE)
                     .setSubject(new X500Principal("CN=" + MASTER_KEY + " CA Certificate"))
@@ -86,6 +83,7 @@ class EncryptionApi18Impl extends EncryptionBaseImpl {
                     .setEndDate(endTime.getTime())
                     .build();
 
+            KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA", KEY_PROVIDER);
             generator.initialize(spec);
             return generator.generateKeyPair();
         } else {
@@ -93,20 +91,7 @@ class EncryptionApi18Impl extends EncryptionBaseImpl {
         }
     }
 
-    static EncryptionApi18Impl get(Context context) {
-        EncryptionApi18Impl instance = singleton;
-        if (instance == null) {
-            synchronized (EncryptionApi18Impl.class) {
-                instance = singleton;
-                if (instance == null) {
-                    singleton = instance = new EncryptionApi18Impl(context);
-                }
-            }
-        }
-        return instance;
-    }
-
-    String encrypt(String data) {
+    public String encrypt(String input) {
         byte[] wrappedKey;
         try {
             synchronized (LOCK) {
@@ -118,15 +103,13 @@ class EncryptionApi18Impl extends EncryptionBaseImpl {
         }
 
         String keyString = Base64.encodeToString(wrappedKey, DEFAULT);
-        String result = encrypt(key, data.getBytes());
+        String result = encrypt(key, input.getBytes());
         return keyString + FIELD_SEPARATOR + result;
     }
 
-    String decrypt(String data) {
-        String[] fields = data.split(FIELD_SEPARATOR);
-        if (fields.length != 3) {
-            throw new EncryptionException("Invalid format");
-        }
+    public String decrypt(String input) {
+        String[] fields = input.split(FIELD_SEPARATOR);
+        if (fields.length != 3) throw new EncryptionException("Invalid format");
 
         byte[] keyText = Base64.decode(fields[0], DEFAULT);
         byte[] iv = Base64.decode(fields[1], DEFAULT);
@@ -141,6 +124,7 @@ class EncryptionApi18Impl extends EncryptionBaseImpl {
         } catch (GeneralSecurityException e) {
             throw new EncryptionException(e);
         }
+
         return decrypt(key, iv, cipherText);
     }
 }
