@@ -6,13 +6,13 @@ Android encryption simplified. Automatic key management, preferring secure hardw
 
 **Please carefully consider your threat model**. Encryption alone is not a security solution. Keys, even if hardware-backed, can [be extracted](https://developer.android.com/training/articles/keystore.html#ExtractionPrevention). Any data that touches a client should be considered compromisable.
 
-Keys are *AES-256*, *CBC*, *PKCS7-padded*, but key management differs depending on the specified platform version.
+Keys are *AES-256*, *CBC*, *PKCS7-padded*, but key management depends on the specified platform version.
 
 * **Jelly Bean and below**: Per-message key is generated from a password stored in [shared preferences](https://developer.android.com/training/data-storage/shared-preferences) and a random salt. Salt, initialization vector, and ciphertext are then encoded.
 
-* **KitKat through Lollipop**: Per-instance key is wrapped with a global RSA key saved to [the keystore](https://developer.android.com/training/articles/keystore.html). The keystore may be hardware-backed. Wrapped key, initialization vector, and ciphertext are then encoded.
+* **KitKat through Lollipop**: Per-instance key is wrapped with a global RSA key saved to [the keystore](https://developer.android.com/training/articles/keystore.html). Keystore may be hardware-backed. Wrapped key, initialization vector, and ciphertext are then encoded.
 
-* **Marshmallow and above**: Global key is managed by the keystore. The keystore may be hardware-backed. Initialization vector and ciphertext are then encoded.
+* **Marshmallow and above**: Global key is managed by the keystore. Keystore may be hardware-backed. Initialization vector and ciphertext are then encoded.
 
 ## Usage
 
@@ -20,7 +20,7 @@ Keys are *AES-256*, *CBC*, *PKCS7-padded*, but key management differs depending 
 ```java
 EncryptionCompat encryption = EncryptionCompat.newInstance();
 ```
-For backwards-compatibility below Marshmallow
+For backwards-compatibility below Marshmallow:
 ```java
 EncryptionCompat encryption = EncryptionCompat.newInstance(minSdk, context);
 ```
@@ -31,7 +31,7 @@ String encoded = encryption.encrypt("foobar");
 String decoded = encryption.decrypt(encoded);
 ```
 
-Encryption and decryption are blocking, and should be executed on non-UI thread(s). Checked exceptions are rethrown as unchecked EncyptionException.
+Encryption and decryption are blocking, and should be executed on non-UI thread(s). Checked exceptions are rethrown as unchecked EncyptionExceptions.
 
 ## Gradle
 
@@ -50,10 +50,10 @@ implementation 'com.github.eric-dk:EncryptionCompat:2.0.0'
 No. EncryptionCompat provides data confidentiality only. Integrity checks should be implemented downstream.
 
 #### Are random values securely generated?
-Generally yes. Salt [randomization](https://developer.android.com/reference/java/security/SecureRandom.html) may have weak entropy depending [on manufacturer](https://android-developers.googleblog.com/2013/08/some-securerandom-thoughts.html). Initialization vector may be [zero-filled](https://stackoverflow.com/a/31037133) if [the cipher](https://developer.android.com/reference/javax/crypto/Cipher.html) is poorly implemented by the manufacturer.
+Generally yes. Salt [randomization](https://developer.android.com/reference/java/security/SecureRandom.html) may have weak entropy depending [on manufacturer](https://android-developers.googleblog.com/2013/08/some-securerandom-thoughts.html). Initialization vector may be [zero-filled](https://stackoverflow.com/a/31037133) if [the cipher](https://developer.android.com/reference/javax/crypto/Cipher.html) is similarly poorly implemented.
 
 #### Will upgrading OS invalidate data?
-Generally no. Decryption should reuse previous keys assuming no loss [due to hardware](https://doridori.github.io/android-security-the-forgetful-keystore/). When crossing implementation boundaries subsequent encryption will generate new, more secure keys.
+No. Decryption should reuse previous keys assuming no loss [due to hardware](https://doridori.github.io/android-security-the-forgetful-keystore/). When crossing implementation boundaries subsequent encryption will generate new, more secure keys.
 
 ## Changelog
 
@@ -68,7 +68,7 @@ Generally no. Decryption should reuse previous keys assuming no loss [due to har
 
 ## References
 
-Credit to Yakiv Mospan for an excellent [series of articles](https://proandroiddev.com/secure-data-in-android-encryption-7eda33e68f58) on encryption using the keystore. 
+Credit to Yakiv Mospan for an excellent [series of articles](https://proandroiddev.com/secure-data-in-android-encryption-7eda33e68f58) on encryption using the keystore.  
 Credit to Nikolay Elenkov for a [great post](https://nelenkov.blogspot.com/2012/04/using-password-based-encryption-on.html) on Android password-based encryption.
 
 ## License

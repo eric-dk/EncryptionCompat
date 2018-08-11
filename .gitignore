@@ -1,8 +1,6 @@
-!.idea/codeStyleSettings.xml
 *.iml
 .DS_Store
 .gradle/
-.idea/
 .metadata/
 .settings/
 build/
