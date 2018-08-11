@@ -52,23 +52,17 @@ public final class EncryptionCompat {
     @CheckResult
     @NonNull
     public String encrypt(@NonNull String input) {
-        if (input.isEmpty()) {
-            return input;
-        } else if (SDK_INT >= M) {
-            return AES_KEYSTORE + api23Encryption.encrypt(input);
-        } else if (SDK_INT >= JELLY_BEAN_MR2) {
-            return RSA_KEYSTORE + api18Encryption.encrypt(input);
-        } else {
-            return SHARED_PREFS + api14Encryption.encrypt(input);
-        }
+        if (input.isEmpty()) return input;
+        if (SDK_INT >= M) return AES_KEYSTORE + api23Encryption.encrypt(input);
+        if (SDK_INT >= JELLY_BEAN_MR2) return RSA_KEYSTORE + api18Encryption.encrypt(input);
+        return SHARED_PREFS + api14Encryption.encrypt(input);
     }
 
     /**
      * Decrypts {@code input} according to encoded key mode.
      *
      * @param  input                    String to decrypt
-     * @throws EncryptionException      Encryption failure
-     * @throws IllegalStateException    Unsupported operation due to minimum SDK version
+     * @throws EncryptionException      Decryption failure
      */
     @CheckResult
     @NonNull
@@ -83,11 +77,11 @@ public final class EncryptionCompat {
                 if (SDK_INT >= M) return api23Encryption.decrypt(encoded);
                 throw new EncryptionException("Requires Marshmallow");
             case RSA_KEYSTORE:
-                if (api18Encryption == null) throw new IllegalStateException("minSdk too low");
+                if (api18Encryption == null) throw new EncryptionException("minSdk too low");
                 if (SDK_INT >= JELLY_BEAN_MR2) return api18Encryption.decrypt(encoded);
                 throw new EncryptionException("Requires Jelly Bean MR2");
             case SHARED_PREFS:
-                if (api14Encryption == null) throw new IllegalStateException("minSdk too low");
+                if (api14Encryption == null) throw new EncryptionException("minSdk too low");
                 return api14Encryption.decrypt(encoded);
             default:
                 throw new EncryptionException("Invalid format");
@@ -100,19 +94,18 @@ public final class EncryptionCompat {
      * @param minSdk                    Minimum SDK version; should match manifest
      * @param context                   For generating and retrieving keys
      * @throws EncryptionException      Rethrown key generation or retrieval exception
-     * @throws IllegalArgumentException Invalid minimum SDK version
      */
     @NonNull
     public static EncryptionCompat newInstance(int minSdk, @NonNull Context context) {
+        if (minSdk < ICE_CREAM_SANDWICH) {
+            throw new EncryptionException("Requires Ice Cream Sandwich");
+        } else if (minSdk > SDK_INT) {
+            throw new EncryptionException(minSdk + " greater than current version");
+        }
+
         Api14Encryption api14Encryption = null;
         Api18Encryption api18Encryption = null;
         Api23Encryption api23Encryption = null;
-
-        if (minSdk < ICE_CREAM_SANDWICH) {
-            throw new IllegalArgumentException("Requires Ice Cream Sandwich");
-        } else if (minSdk > SDK_INT) {
-            throw new IllegalArgumentException(minSdk + " greater than current version");
-        }
 
         if (minSdk < JELLY_BEAN_MR2) api14Encryption = new Api14Encryption(context);
         if (minSdk < M && SDK_INT >= JELLY_BEAN_MR2) api18Encryption = new Api18Encryption(context);
