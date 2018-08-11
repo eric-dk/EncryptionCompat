@@ -41,7 +41,7 @@ repositories {
     maven { url 'https://jitpack.io' }
 }
 
-implementation 'com.github.eric-dk:EncryptionCompat:2.0.0'
+implementation 'com.github.eric-dk:EncryptionCompat:2.0.1'
 ```
 
 ## FAQ
@@ -57,6 +57,8 @@ No. Decryption should reuse previous keys assuming no loss [due to hardware](htt
 
 ## Changelog
 
+* **2.0.1**
+    * Restricts visibility of internal classes
 * **2.0.0**
     * Switches to non-static usage
 * **1.0.2**
