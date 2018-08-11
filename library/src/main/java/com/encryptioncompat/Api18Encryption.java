@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-package com.encryptioncompat.internal;
+package com.encryptioncompat;
 
 import android.content.Context;
 import android.support.annotation.RequiresApi;
 import android.util.Base64;
-import com.encryptioncompat.EncryptionException;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.security.GeneralSecurityException;
@@ -41,7 +40,7 @@ import static javax.crypto.Cipher.UNWRAP_MODE;
 import static javax.crypto.Cipher.WRAP_MODE;
 
 @RequiresApi(JELLY_BEAN_MR2)
-public class Api18Encryption extends AbstractEncryption {
+class Api18Encryption extends AbstractEncryption {
     private static final String KEY_PROVIDER = "AndroidKeyStore";
     private static final String MASTER_KEY   = Api18Encryption.class.getSimpleName();
 
@@ -49,7 +48,7 @@ public class Api18Encryption extends AbstractEncryption {
     private final Key key;
     private final KeyPair keyPair;
 
-    public Api18Encryption(Context context) throws EncryptionException {
+    Api18Encryption(Context context) throws EncryptionException {
         try {
             KeyGenerator generator = KeyGenerator.getInstance(KEY_ALGORITHM);
             generator.init(KEY_SIZE);
@@ -91,7 +90,7 @@ public class Api18Encryption extends AbstractEncryption {
         }
     }
 
-    public String encrypt(String input) {
+    String encrypt(String input) {
         byte[] wrappedKey;
         try {
             synchronized (LOCK) {
@@ -107,7 +106,7 @@ public class Api18Encryption extends AbstractEncryption {
         return keyString + FIELD_SEPARATOR + result;
     }
 
-    public String decrypt(String input) {
+    String decrypt(String input) {
         String[] fields = input.split(FIELD_SEPARATOR);
         if (fields.length != 3) throw new EncryptionException("Invalid format");
 

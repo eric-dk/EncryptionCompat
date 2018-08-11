@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-package com.encryptioncompat.internal;
+package com.encryptioncompat;
 
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
 import android.support.annotation.RequiresApi;
 import android.util.Base64;
-import com.encryptioncompat.EncryptionException;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.Key;
@@ -30,13 +29,13 @@ import static android.os.Build.VERSION_CODES.M;
 import static android.util.Base64.DEFAULT;
 
 @RequiresApi(M)
-public class Api23Encryption extends AbstractEncryption {
+class Api23Encryption extends AbstractEncryption {
     private static final String KEY_PROVIDER = "AndroidKeyStore";
     private static final String MASTER_KEY   = Api23Encryption.class.getSimpleName();
 
     private final Key key;
 
-    public Api23Encryption() {
+    Api23Encryption() {
         try {
             key = getKey();
         } catch (GeneralSecurityException | IOException e) {
@@ -65,11 +64,11 @@ public class Api23Encryption extends AbstractEncryption {
         return result;
     }
 
-    public String encrypt(String input) {
+    String encrypt(String input) {
         return encrypt(key, input.getBytes());
     }
 
-    public String decrypt(String input) {
+    String decrypt(String input) {
         String[] fields = input.split(FIELD_SEPARATOR);
         if (fields.length != 2) throw new EncryptionException("Invalid format");
 

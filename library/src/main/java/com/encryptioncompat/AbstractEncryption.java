@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.encryptioncompat.internal;
+package com.encryptioncompat;
 
 import android.util.Base64;
 import com.encryptioncompat.EncryptionException;

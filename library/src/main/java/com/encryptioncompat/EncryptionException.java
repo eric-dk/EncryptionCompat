@@ -17,11 +17,11 @@
 package com.encryptioncompat;
 
 public final class EncryptionException extends RuntimeException {
-    public EncryptionException(String message) {
+    EncryptionException(String message) {
         super(message);
     }
 
-    public EncryptionException(Throwable cause) {
+    EncryptionException(Throwable cause) {
         super(cause.getMessage(), cause);
     }
 }

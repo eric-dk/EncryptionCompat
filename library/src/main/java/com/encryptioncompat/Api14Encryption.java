@@ -14,13 +14,11 @@
  * limitations under the License.
  */
 
-package com.encryptioncompat.internal;
+package com.encryptioncompat;
 
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.util.Base64;
-import com.encryptioncompat.EncryptionCompat;
-import com.encryptioncompat.EncryptionException;
 import java.security.GeneralSecurityException;
 import java.security.Key;
 import java.security.NoSuchAlgorithmException;
@@ -31,7 +29,7 @@ import javax.crypto.spec.SecretKeySpec;
 import static android.content.Context.MODE_PRIVATE;
 import static android.util.Base64.DEFAULT;
 
-public class Api14Encryption extends AbstractEncryption {
+class Api14Encryption extends AbstractEncryption {
     private static final String MASTER_KEY = Api14Encryption.class.getSimpleName();
     private static final String PREFS_NAME = EncryptionCompat.class.getSimpleName();
 
@@ -41,7 +39,7 @@ public class Api14Encryption extends AbstractEncryption {
     private final SecretKeyFactory factory;
     private final SecureRandom random;
 
-    public Api14Encryption(Context context) {
+    Api14Encryption(Context context) {
         random = new SecureRandom();
         password = getPassword(context);
 
@@ -66,7 +64,7 @@ public class Api14Encryption extends AbstractEncryption {
         return result.toCharArray();
     }
 
-    public String encrypt(String input) {
+    String encrypt(String input) {
         byte[] salt = new byte[SALT_SIZE];
         random.nextBytes(salt);
         String saltString = Base64.encodeToString(salt, DEFAULT);
@@ -82,7 +80,7 @@ public class Api14Encryption extends AbstractEncryption {
         return saltString + FIELD_SEPARATOR + result;
     }
 
-    public String decrypt(String input) {
+    String decrypt(String input) {
         String[] fields = input.split(FIELD_SEPARATOR);
         if (fields.length != 3) throw new EncryptionException("Invalid format");
 

@@ -21,9 +21,6 @@ import android.support.annotation.CheckResult;
 import android.support.annotation.NonNull;
 import android.support.annotation.RequiresApi;
 import android.support.annotation.VisibleForTesting;
-import com.encryptioncompat.internal.Api14Encryption;
-import com.encryptioncompat.internal.Api18Encryption;
-import com.encryptioncompat.internal.Api23Encryption;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.ICE_CREAM_SANDWICH;
 import static android.os.Build.VERSION_CODES.JELLY_BEAN_MR2;
@@ -69,7 +66,7 @@ public final class EncryptionCompat {
     /**
      * Decrypts {@code input} according to encoded key mode.
      *
-     * @param  input                String to decrypt
+     * @param  input                    String to decrypt
      * @throws EncryptionException      Encryption failure
      * @throws IllegalStateException    Unsupported operation due to minimum SDK version
      */
