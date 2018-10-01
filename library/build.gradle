@@ -1,6 +1,6 @@
 apply plugin: 'com.android.library'
 apply plugin: 'com.github.dcendents.android-maven'
-group = 'com.github.eric-dk'
+group = 'com.gitlab.eric-dk'
 
 android {
     buildToolsVersion versions.buildTools
