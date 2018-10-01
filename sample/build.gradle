@@ -1,7 +1,7 @@
 apply plugin: 'com.android.application'
 
 android {
-    buildToolsVersion versions.android.buildTools
+    buildToolsVersion versions.buildTools
     compileSdkVersion versions.sdk.target
 
     defaultConfig {
@@ -16,7 +16,7 @@ android {
 dependencies {
     implementation project(':library')
 
-    // Android support
-    implementation "com.android.support:appcompat-v7:${versions.android.support}"
-    implementation 'com.android.support.constraint:constraint-layout:1.1.2'
+    // AndroidX
+    implementation 'androidx.appcompat:appcompat:1.0.0'
+    implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
 }

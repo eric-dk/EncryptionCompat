@@ -17,7 +17,6 @@
 package com.encryptioncompat;
 
 import android.content.Context;
-import android.support.annotation.RequiresApi;
 import android.util.Base64;
 import java.io.IOException;
 import java.math.BigInteger;
@@ -33,6 +32,7 @@ import java.util.Calendar;
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
 import javax.security.auth.x500.X500Principal;
+import androidx.annotation.RequiresApi;
 import static android.os.Build.VERSION_CODES.JELLY_BEAN_MR2;
 import static android.util.Base64.DEFAULT;
 import static javax.crypto.Cipher.SECRET_KEY;

@@ -1,30 +1,27 @@
 buildscript {
     ext {
         versions = [
-                android: [
-                        buildTools: '27.0.3',
-                        support   : '27.1.1'
-                ],
+                buildTools: '28.0.3',
                 sdk: [
                         minimum: 14,
-                        target:  27
+                        target:  28
                 ]
         ]
     }
     repositories {
-        jcenter()
         google()
+        jcenter()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.1.4'
-        classpath 'com.github.dcendents:android-maven-gradle-plugin:2.0'
+        classpath 'com.android.tools.build:gradle:3.2.0'
+        classpath 'com.github.dcendents:android-maven-gradle-plugin:2.1'
     }
 }
 
 allprojects {
     repositories {
-        jcenter()
         google()
+        jcenter()
     }
 }
 

@@ -18,13 +18,13 @@ package com.encryptioncompat;
 
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
-import android.support.annotation.RequiresApi;
 import android.util.Base64;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.Key;
 import java.security.KeyStore;
 import javax.crypto.KeyGenerator;
+import androidx.annotation.RequiresApi;
 import static android.os.Build.VERSION_CODES.M;
 import static android.util.Base64.DEFAULT;
 
