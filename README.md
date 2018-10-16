@@ -1,6 +1,6 @@
 # EncryptionCompat
 
-[![](https://jitpack.io/v/eric-dk/EncryptionCompat.svg)](https://jitpack.io/#eric-dk/EncryptionCompat)
+[![](https://jitpack.io/v/com.gitlab.eric-dk/EncryptionCompat.svg)](https://jitpack.io/#com.gitlab.eric-dk/EncryptionCompat)
 
 Android encryption simplified. Automatic key management, preferring secure hardware. Backwards-compatible across platform versions. Best for obfuscating sensitive on-device data.
 
@@ -41,7 +41,7 @@ repositories {
     maven { url 'https://jitpack.io' }
 }
 
-implementation 'com.github.eric-dk:EncryptionCompat:2.0.2'
+implementation 'com.gitlab.eric-dk:EncryptionCompat:2.0.2'
 ```
 
 ## FAQ
