@@ -9,16 +9,17 @@ android {
     defaultConfig {
         minSdkVersion versions.sdk.minimum
         targetSdkVersion versions.sdk.target
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
     }
 }
 
 dependencies {
-    androidTestImplementation 'com.android.support.test:runner:1.0.2'
-    testImplementation 'junit:junit:4.12'
-
     // AndroidX
     implementation 'androidx.annotation:annotation:1.0.0'
+    // Testing
+    androidTestImplementation 'androidx.test:core:1.0.0-beta02'
+    androidTestImplementation 'androidx.test.ext:junit:1.0.0-beta02'
+    androidTestImplementation 'androidx.test:runner:1.1.0-beta02'
 }
 
 task sources(type: Jar) {
