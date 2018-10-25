@@ -121,7 +121,6 @@ public final class EncryptionCompat {
      */
     @NonNull
     @RequiresApi(M)
-    @SuppressWarnings("unused")
     public static EncryptionCompat newInstance() {
         return new EncryptionCompat(null, null, new Api23Encryption());
     }
