@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Eric Nguyen
+ * Copyright © 2020 Eric Nguyen
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,71 +16,40 @@
 
 package com.encryptioncompat.sample;
 
-import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
-import android.view.View;
 import android.widget.TextView;
+import com.google.android.material.snackbar.Snackbar;
 import androidx.appcompat.app.AppCompatActivity;
-import com.encryptioncompat.EncryptionCompat;
-import com.encryptioncompat.EncryptionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import static android.os.Build.VERSION_CODES.ICE_CREAM_SANDWICH;
+import androidx.lifecycle.ViewModelProvider;
 
 public class SampleActivity extends AppCompatActivity {
-    private EncryptionCompat encryption;
-    private ExecutorService executor;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sample);
 
-        encryption = EncryptionCompat.newInstance(ICE_CREAM_SANDWICH, this);
-        executor = Executors.newSingleThreadExecutor();
+        TextView inputText = findViewById(R.id.inputText);
+        TextView cipherText = findViewById(R.id.cipherText);
+        TextView plainText = findViewById(R.id.plainText);
 
-        final TextView inputText = findViewById(R.id.inputText);
-        final TextView cipherText = findViewById(R.id.cipherText);
-        final TextView plainText = findViewById(R.id.plainText);
+        ViewModelProvider.Factory factory =
+                new ViewModelProvider.AndroidViewModelFactory(getApplication());
+        SampleViewModel viewModel =
+                new ViewModelProvider(this, factory).get(SampleViewModel.class);
 
-        findViewById(R.id.inputButton).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                final String input = inputText.getText().toString();
-                executor.submit(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            final String encoded = encryption.encrypt(input).trim();
-                            final String decoded = encryption.decrypt(encoded).trim();
+        viewModel.getCipherText().observe(this, cipherText::setText);
+        viewModel.getPlainText().observe(this, plainText::setText);
+        viewModel.getErrorText().observe(this, text ->
+                Snackbar.make(inputText, text, Snackbar.LENGTH_LONG).show()
+        );
 
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    if (!isFinishing()) {
-                                        cipherText.setText(encoded);
-                                        plainText.setText(decoded);
-                                    }
-                                }
-                            });
-                        } catch (EncryptionException e) {
-                            Log.e(getString(R.string.name), e.toString(), e);
-                        }
-                    }
-                });
-            }
-        });
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        executor.shutdown();
+        findViewById(R.id.inputButton).setOnClickListener(view ->
+                viewModel.setInputText(inputText.getText().toString())
+        );
     }
 
     @Override
     public void onBackPressed() {
-        startActivity(new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME));
+        moveTaskToBack(false);
     }
 }

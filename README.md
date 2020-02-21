@@ -2,61 +2,84 @@
 
 [![](https://jitpack.io/v/com.gitlab.eric-dk/EncryptionCompat.svg)](https://jitpack.io/#com.gitlab.eric-dk/EncryptionCompat)
 
-Android encryption simplified. Automatic key management, preferring secure hardware. Backwards-compatible across platform versions. Best for obfuscating sensitive on-device data.
+Android encryption simplified. Automatic key management, preferring secure hardware. Backwards compatible across platform versions. Best for obfuscating sensitive data.
 
-**Please carefully consider your threat model**. Encryption alone is not a security solution. Keys, even if hardware-backed, can [be extracted](https://developer.android.com/training/articles/keystore.html#ExtractionPrevention). Any data that touches a client should be considered compromisable.
+**Carefully consider your threat model**. Encryption alone is not security; keys can be extracted given [enough means](https://developer.android.com/training/articles/keystore.html#ExtractionPrevention). All data that touches a client should be considered compromisable.
 
-Keys are *AES-256*, *CBC*, *PKCS7-padded*, but key management depends on the specified platform version.
+Messages are encrypted with a *AES256-CBC-PKCS7* key, but the key management scheme depends on the device platform.
 
-* **Jelly Bean and below**: Per-message key is generated from a password stored in [shared preferences](https://developer.android.com/training/data-storage/shared-preferences) and a random salt. Salt, initialization vector, and ciphertext are then encoded.
+* **Least secure (below API 18)**: A per-message key is created from a random salt and a global password - stored in [shared preferences](https://developer.android.com/training/data-storage/shared-preferences). The initialization vector, ciphertext, and salt are then encoded.
 
-* **KitKat through Lollipop**: Per-instance key is wrapped with a global RSA key saved to [the keystore](https://developer.android.com/training/articles/keystore.html). Keystore may be hardware-backed. Wrapped key, initialization vector, and ciphertext are then encoded.
+* **More secure (API 18-22)**: A per-instance key is wrapped with a global asymmetric key - saved in the [Android Keystore](https://developer.android.com/training/articles/keystore.html). The initialization vector, ciphertext, and wrapped key are then encoded.
 
-* **Marshmallow and above**: Global key is managed by the keystore. Keystore may be hardware-backed. Initialization vector and ciphertext are then encoded.
+* **Most secure (API 23+)**: A global key is managed by the Android Keystore, which may be bound to a trusted execution environment. The initialization vector and ciphertext are then encoded.
+
+* **Most secure (API 28+)**: Same as above, but the key is stored in a [hardware security module](https://developer.android.com/training/articles/keystore#HardwareSecurityModule); only available on a [few devices](https://github.com/GrapheneOS/AttestationSamples). The initialization vector and ciphertext are then encoded.
+
+Due to manufacturer fragmentation, EncryptionCompat will attempt the highest possible scheme then fall through until reaching the specified minimum platform.
 
 ## Usage
 
 #### Initialization
-```java
-EncryptionCompat encryption = EncryptionCompat.newInstance();
+
+EncryptionCompat requires `Context` and a minimum platform, which should be equal to `minSdkVersion`. However, going lower increases compatibility with troublesome devices (see sample).
+
+**Kotlin**
+```kotlin
+val encryption = EncryptionCompat(context, minSdk)
 ```
-For backwards-compatibility below Marshmallow:
+**Java**
 ```java
-EncryptionCompat encryption = EncryptionCompat.newInstance(minSdk, context);
+EncryptionCompat encryption = new EncryptionCompat(context, minSdk);
 ```
 
-#### Data handling
+A version with [RxJava 2.x](https://github.com/ReactiveX/RxJava) bindings is also available.
+
+**Kotlin**
+```kotlin
+val encryption = RxEncryptionCompat(context, minSdk)
+```
+**Java**
 ```java
-String encoded = encryption.encrypt("foobar");
-String decoded = encryption.decrypt(encoded);
+RxEncryptionCompat encryption = new RxEncryptionCompat(context, minSdk);
 ```
 
-Encryption and decryption are blocking, and should be executed on non-UI thread(s). Checked exceptions are rethrown as unchecked EncyptionExceptions.
+#### Message handling
+
+EncryptionCompat runs on an independent single thread to ensure sequential key access. You can retrieve output by providing a callback, handling the suspending function, or observing the [RxJava Single](http://reactivex.io/documentation/single.html).
 
 ## Gradle
 
-#### Add dependency to build.gradle
+#### Adding dependency
+
+In your module `build.gradle`. Please note that 3.x.x is not backwards compatible and cannot read previously encrypted messages.
+
 ```gradle
 repositories {
     maven { url 'https://jitpack.io' }
 }
 
-implementation 'com.gitlab.eric-dk:EncryptionCompat:2.0.2'
+// If using callback or coroutines
+implementation 'com.gitlab.eric-dk:EncryptionCompat:core:3.0.0'
+// If using RxJava
+implementation 'com.gitlab.eric-dk:EncryptionCompat:rx:3.0.0'
 ```
 
 ## FAQ
 
-#### Is there integrity protection?
-No. EncryptionCompat provides data confidentiality only. Integrity checks should be implemented downstream.
+#### Is integrity protection provided?
+No. EncryptionCompat provides confidentiality only. Performing integrity checks downstream is recommended.
 
 #### Are random values securely generated?
-Generally yes. Salt [randomization](https://developer.android.com/reference/java/security/SecureRandom.html) may have weak entropy depending [on manufacturer](https://android-developers.googleblog.com/2013/08/some-securerandom-thoughts.html). Initialization vector may be [zero-filled](https://stackoverflow.com/a/31037133) if [the cipher](https://developer.android.com/reference/javax/crypto/Cipher.html) is similarly poorly implemented.
+Probably. Randomization may have weak entropy depending on [manufacturer](https://android-developers.googleblog.com/2013/08/some-securerandom-thoughts.html). The initialization vector may also be [zero-filled](https://stackoverflow.com/a/31037133).
 
-#### Will upgrading OS invalidate data?
-No. Decryption should reuse previous keys assuming no loss [due to hardware](https://doridori.github.io/android-security-the-forgetful-keystore/). When crossing implementation boundaries subsequent encryption will generate new, more secure keys.
+#### Will upgrading Android invalidate data?
+No. Decryption should reuse previous keys [assuming no loss](https://doridori.github.io/android-security-the-forgetful-keystore/). Subsequent messages will be encrypted with new, more secure keys.
 
 ## Changelog
 
+* **3.0.0**
+    * Supports coroutines and RxJava
 * **2.0.2**
     * Only throws EncryptionException
 * **2.0.1**
@@ -72,12 +95,12 @@ No. Decryption should reuse previous keys assuming no loss [due to hardware](htt
 
 ## References
 
-Credit to Yakiv Mospan for an excellent [series of articles](https://proandroiddev.com/secure-data-in-android-encryption-7eda33e68f58) on encryption using the keystore.  
-Credit to Nikolay Elenkov for a [great post](https://nelenkov.blogspot.com/2012/04/using-password-based-encryption-on.html) on Android password-based encryption.
+Credit goes to Yakiv Mospan for an excellent [series of articles](https://proandroiddev.com/secure-data-in-android-encryption-7eda33e68f58) on using the Android Keystore.  
+Credit goes to Nikolay Elenkov for a [great post](https://nelenkov.blogspot.com/2012/04/using-password-based-encryption-on.html) regarding password-based encryption on Android.
 
 ## License
 
-    Copyright © 2018 Eric Nguyen
+    Copyright © 2020 Eric Nguyen
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.

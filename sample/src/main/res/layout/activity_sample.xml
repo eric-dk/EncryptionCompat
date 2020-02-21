@@ -6,7 +6,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:gravity="center_horizontal"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    tools:context=".SampleActivity">
 
     <EditText
         android:id="@+id/inputText"
@@ -14,10 +15,10 @@
         android:hint="@string/input"
         android:importantForAutofill="no"
         android:inputType="textMultiLine"
+        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toStartOf="@id/inputButton"
-        tools:ignore="UnusedAttribute"
-        style="@style/TextView"/>
+        style="@style/AppText"/>
 
     <Button
         android:id="@+id/inputButton"
@@ -31,17 +32,17 @@
 
     <TextView
         android:id="@+id/cipherText"
-        android:hint="@string/encrypted"
+        android:hint="@string/cipher"
         app:layout_constraintTop_toBottomOf="@id/inputText"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        style="@style/TextView"/>
+        style="@style/AppText"/>
 
     <TextView
         android:id="@+id/plainText"
-        android:hint="@string/decrypted"
+        android:hint="@string/plain"
         app:layout_constraintTop_toBottomOf="@id/cipherText"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        style="@style/TextView"/>
+        style="@style/AppText"/>
 </androidx.constraintlayout.widget.ConstraintLayout>

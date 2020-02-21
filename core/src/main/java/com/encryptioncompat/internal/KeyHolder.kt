@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Eric Nguyen
+ * Copyright © 2020 Eric Nguyen
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,17 @@
  * limitations under the License.
  */
 
-package com.encryptioncompat;
+package com.encryptioncompat.internal
 
-public final class EncryptionException extends RuntimeException {
-    EncryptionException(String message) {
-        super(message);
+import java.security.Key
+
+internal interface KeyHolder {
+    companion object {
+        const val AES = "AES"
+        const val LENGTH = 256
+        const val PROVIDER = "AndroidKeyStore"
     }
 
-    EncryptionException(Throwable cause) {
-        super(cause.getMessage(), cause);
-    }
+    fun getEncryptBundle(): KeyBundle
+    fun getDecryptKey(metadata: String): Key
 }
