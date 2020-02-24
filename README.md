@@ -1,12 +1,12 @@
 # EncryptionCompat
 
-[![](https://jitpack.io/v/com.gitlab.eric-dk/EncryptionCompat.svg)](https://jitpack.io/#com.gitlab.eric-dk/EncryptionCompat)
+[![](https://jitpack.io/v/com.github.eric-dk/EncryptionCompat.svg)](https://jitpack.io/#com.github.eric-dk/EncryptionCompat)
 
 Android encryption simplified. Automatic key management, preferring secure hardware. Backwards compatible across platform versions. Best for obfuscating sensitive data.
 
 **Carefully consider your threat model**. Encryption alone is not security; keys can be extracted given [enough means](https://developer.android.com/training/articles/keystore.html#ExtractionPrevention). All data that touches a client should be considered compromisable.
 
-Messages are encrypted with a *AES256-CBC-PKCS7* key, but the key management scheme depends on the device platform.
+Messages are encrypted with a *AES256/CBC/PKCS7* key, but the key management scheme depends on device support.
 
 * **Least secure (below API 18)**: A per-message key is created from a random salt and a global password - stored in [shared preferences](https://developer.android.com/training/data-storage/shared-preferences). The initialization vector, ciphertext, and salt are then encoded.
 
@@ -46,23 +46,27 @@ RxEncryptionCompat encryption = new RxEncryptionCompat(context, minSdk);
 
 #### Message handling
 
-EncryptionCompat runs on an independent single thread to ensure sequential key access. You can retrieve output by providing a callback, handling the suspending function, or observing the [RxJava Single](http://reactivex.io/documentation/single.html).
+EncryptionCompat runs on an independent single thread to ensure sequential key access. You can retrieve output by providing a callback, handling the suspending function, or observing the [RxJava Single](http://reactivex.io/documentation/single.html). Please note that 3.x.x is not backwards compatible and cannot read previously encrypted messages.
 
 ## Gradle
 
 #### Adding dependency
 
-In your module `build.gradle`. Please note that 3.x.x is not backwards compatible and cannot read previously encrypted messages.
-
+Add the maven repository to the project `build.gradle`:
 ```gradle
-repositories {
-    maven { url 'https://jitpack.io' }
+allprojects {
+    repositories {
+        maven { url 'https://jitpack.io' }
+    }
 }
+```
 
-// If using callback or coroutines
-implementation 'com.gitlab.eric-dk:EncryptionCompat:core:3.0.0'
-// If using RxJava
-implementation 'com.gitlab.eric-dk:EncryptionCompat:rx:3.0.0'
+Add the dependency to the module `build.gradle`:
+```gradle
+// If using callbacks or coroutines
+implementation 'com.github.eric-dk.EncryptionCompat:core:3.0.0'
+// If using RxJava only
+implementation 'com.github.eric-dk.EncryptionCompat:rx:3.0.0'
 ```
 
 ## FAQ

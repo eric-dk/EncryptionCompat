@@ -1,7 +1,7 @@
 apply plugin: 'com.android.library'
 apply plugin: 'com.github.dcendents.android-maven'
 apply plugin: 'kotlin-android'
-group = 'com.gitlab.eric-dk'
+group = 'com.github.eric-dk'
 
 android {
     compileSdkVersion versions.sdk.target
@@ -29,16 +29,11 @@ dependencies {
     implementation 'io.reactivex.rxjava2:rxkotlin:2.4.0'
 }
 
-task classes(type: Jar) {
-    from "$buildDir/intermediates/classes/release"
-}
-
 task sources(type: Jar) {
     archiveClassifier.set("sources")
     from android.sourceSets.main.java.srcDirs
 }
 
 artifacts {
-    archives classes
     archives sources
 }

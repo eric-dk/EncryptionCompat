@@ -23,6 +23,23 @@ import androidx.annotation.CheckResult
 import com.encryptioncompat.internal.Encryption
 import kotlinx.coroutines.*
 
+/**
+ * Encrypts with AES256/CBC/PKCS7 key, but the key management scheme depends on
+ * device support:
+ * <p><ul>
+ * <li>Least secure (below API 18): Per-message key is created from random salt and global password
+ * - stored in shared preferences
+ * <li>More secure (API 18-22): Per-instance key is wrapped with global asymmetric key - saved in
+ * Android Keystore
+ * <li>Most secure (API 23+): Global key is managed by Android Keystore
+ * <li>Most secure (API 28+): Same as above, but key is stored in hardware security module
+ * </ul></p>
+ * Due to manufacturer fragmentation, EncryptionCompat will attempt the highest possible scheme then
+ * fall through until reaching the specified minimum platform.
+ *
+ * @param context           Will get application context
+ * @param minSdk            Minimum supported platform
+ */
 class EncryptionCompat(context: Context, minSdk: Int) {
     interface Callback {
         fun onSuccess(output: String)
@@ -32,7 +49,8 @@ class EncryptionCompat(context: Context, minSdk: Int) {
     private val encryption = Encryption(context.applicationContext, minSdk..Build.VERSION.SDK_INT)
 
     /**
-     * Encrypts {@code input} with AES-256, CBC, PKCS7-padded key.
+     * Encrypts {@code input}. Key management depends on device support.
+     * Can be called from any thread; encryption is run on independent thread, callback on main.
      *
      * @param input         String to encrypt
      * @param callback      Callback on execution
@@ -47,7 +65,8 @@ class EncryptionCompat(context: Context, minSdk: Int) {
     }
 
     /**
-     * Encrypts {@code input} with AES-256, CBC, PKCS7-padded key.
+     * Encrypts {@code input}. Key management depends on device support.
+     * Can be called from any thread; encryption is run on independent thread.
      *
      * @param input         String to encrypt
      * @return              Encrypted string
@@ -57,7 +76,8 @@ class EncryptionCompat(context: Context, minSdk: Int) {
     suspend fun encrypt(input: String) = encryption.encrypt(input)
 
     /**
-     * Decrypts {@code input} according to encoded key mode.
+     * Decrypts {@code input}. Will throw exception if encoded mode unsupported or key unavailable.
+     * Can be called from any thread; encryption is run on independent thread, callback on main.
      *
      * @param input         String to decrypt
      * @param callback      Callback on execution
@@ -72,7 +92,8 @@ class EncryptionCompat(context: Context, minSdk: Int) {
     }
 
     /**
-     * Decrypts {@code input} according to encoded key mode.
+     * Decrypts {@code input}. Will throw exception if mode unsupported or key unavailable.
+     * Can be called from any thread; encryption is run on independent thread.
      *
      * @param input         String to decrypt
      * @return              Decrypted string
