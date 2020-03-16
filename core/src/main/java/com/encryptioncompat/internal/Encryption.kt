@@ -26,17 +26,16 @@ import com.encryptioncompat.internal.keyholder.MarshmallowKeyHolder
 import com.encryptioncompat.internal.keyholder.PieKeyHolder
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.withContext
+import java.nio.ByteBuffer
 import java.util.concurrent.Executors
 import javax.crypto.Cipher
 import javax.crypto.spec.IvParameterSpec
 
 internal class Encryption(context: Context, sdkRange: IntRange) {
-    companion object {
-        const val SEPARATOR = '|'
+    private companion object {
         val SHARED = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
     }
 
-    private val cipher by lazy { Cipher.getInstance("AES/CBC/PKCS7Padding") }
     private val sdkToKeyHolders = SparseArray<KeyHolder>(4)
         .apply {
             if (sdkRange.first < Build.VERSION_CODES.JELLY_BEAN_MR2) {
@@ -53,6 +52,8 @@ internal class Encryption(context: Context, sdkRange: IntRange) {
             }
         }
 
+    private val cipher by lazy { Cipher.getInstance("AES/CBC/PKCS5Padding") }
+
     suspend fun encrypt(input: String): String {
         input.isNotEmpty() || return input
 
@@ -60,8 +61,10 @@ internal class Encryption(context: Context, sdkRange: IntRange) {
         return withContext(SHARED) {
             for (sdk in sdkToKeyHolders.reverseKeyIterator()) {
                 try {
-                    return@withContext encrypt(input, sdk)
-                } catch (throwable: Throwable) {}
+                    return@withContext encrypt(sdk, input)
+                } catch (throwable: Throwable) {
+                    throwable.printStackTrace()
+                }
             }
             throw IllegalStateException("Cannot generate key")
         }
@@ -70,30 +73,42 @@ internal class Encryption(context: Context, sdkRange: IntRange) {
     suspend fun decrypt(input: String): String {
         input.isNotEmpty() || return input
 
-        // Check validity
-        val segments = input.split(SEPARATOR)
-        segments.size == 4 || throw IllegalArgumentException("Invalid input")
+        // Segment input
+        return withContext(SHARED) {
+            val buffer = input.decode()
 
-        return withContext(SHARED) { decrypt(segments) }
+            val sdk = buffer.get().toInt()
+            val iv = ByteArray(16).apply { buffer.get(this) }
+            val text = ByteArray(buffer.int).apply { buffer.get(this) }
+            val metadata = ByteArray(buffer.int).apply { buffer.get(this) }
+
+            decrypt(sdk, iv, text, metadata)
+        }
     }
 
-    private fun encrypt(input: String, sdk: Int): String {
+    private fun encrypt(sdk: Int, input: String): String {
         // Initialize cipher
         val bundle = sdkToKeyHolders[sdk].getEncryptBundle()
         cipher.init(Cipher.ENCRYPT_MODE, bundle.key)
 
         val iv = cipher.iv
         val text = cipher.doFinal(input.toByteArray())
-        return "$sdk$SEPARATOR${iv.encode()}$SEPARATOR${text.encode()}$SEPARATOR${bundle.metadata}"
+        return ByteBuffer.allocate(25 + text.size + bundle.metadata.size)
+            .put(sdk.toByte())
+            .put(iv)
+            .putInt(text.size)
+            .put(text)
+            .putInt(bundle.metadata.size)
+            .put(bundle.metadata)
+            .encode()
     }
 
-    private fun decrypt(segments: List<String>): String {
+    private fun decrypt(sdk: Int, iv: ByteArray, text: ByteArray, metadata: ByteArray): String {
         // Choose keys
-        val sdk = segments[0].toInt()
         sdkToKeyHolders.contains(sdk) || throw IllegalStateException("Cannot retrieve key")
 
-        val key = sdkToKeyHolders[sdk].getDecryptKey(segments[3])
-        cipher.init(Cipher.DECRYPT_MODE, key, IvParameterSpec(segments[1].decode()))
-        return String(cipher.doFinal(segments[2].decode()))
+        val key = sdkToKeyHolders[sdk].getDecryptKey(metadata)
+        cipher.init(Cipher.DECRYPT_MODE, key, IvParameterSpec(iv))
+        return String(cipher.doFinal(text))
     }
 }

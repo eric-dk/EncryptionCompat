@@ -20,8 +20,6 @@ import android.content.Context
 import androidx.core.content.edit
 import com.encryptioncompat.internal.KeyBundle
 import com.encryptioncompat.internal.KeyHolder
-import com.encryptioncompat.internal.decode
-import com.encryptioncompat.internal.encode
 import java.security.Key
 import java.security.SecureRandom
 import javax.crypto.SecretKeyFactory
@@ -42,7 +40,7 @@ internal class IceCreamSandwichKeyHolder(context: Context) : KeyHolder {
             ?.toCharArray()
             ?: run {
                 // Generate password
-                val bytes = ByteArray(128)
+                val bytes = ByteArray(64)
                 secureRandom.nextBytes(bytes)
 
                 val string = String(bytes)
@@ -52,15 +50,15 @@ internal class IceCreamSandwichKeyHolder(context: Context) : KeyHolder {
     }
 
     override fun getEncryptBundle(): KeyBundle {
-        val salt = ByteArray(32)
+        val salt = ByteArray(KeyHolder.LENGTH / 8)
         secureRandom.nextBytes(salt)
-        return KeyBundle(getKey(salt), salt.encode())
+        return KeyBundle(getKey(salt), salt)
     }
 
-    override fun getDecryptKey(metadata: String) = getKey(metadata.decode())
+    override fun getDecryptKey(metadata: ByteArray) = getKey(metadata)
 
     private fun getKey(salt: ByteArray): Key {
-        val spec = PBEKeySpec(password, salt, 1000, KeyHolder.LENGTH)
+        val spec = PBEKeySpec(password, salt, 10_000, KeyHolder.LENGTH)
         val key = keyFactory.generateSecret(spec).encoded
         return SecretKeySpec(key, KeyHolder.AES)
     }

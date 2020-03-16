@@ -22,6 +22,8 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.SdkSuppress
 import com.encryptioncompat.internal.Encryption
+import com.encryptioncompat.internal.decode
+import com.encryptioncompat.internal.encode
 import com.encryptioncompat.internal.hasStrongBox
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.runBlocking
@@ -29,6 +31,7 @@ import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.nio.ByteBuffer
 import kotlin.math.min
 
 @RunWith(AndroidJUnit4::class)
@@ -60,30 +63,31 @@ class EncryptionTest {
 
     @Test
     fun ice_cream_sandwich_flag_set() {
-        val expected = "${Build.VERSION_CODES.ICE_CREAM_SANDWICH}"
+        val expected = Build.VERSION_CODES.ICE_CREAM_SANDWICH
         val result = runBlocking {
             val range = Build.VERSION_CODES.BASE..Build.VERSION_CODES.JELLY_BEAN_MR1
-            Encryption(context, range).encrypt("foo")
+            Encryption(context, range).encrypt("foo").decode().get().toInt()
         }
-        assertThat(result).startsWith(expected)
+        assertThat(result).isEqualTo(expected)
     }
 
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.JELLY_BEAN_MR2)
     @Test
     fun jelly_bean_flag_set() {
+        val expected = Build.VERSION_CODES.JELLY_BEAN_MR2
         val result = runBlocking {
             val range = Build.VERSION_CODES.JELLY_BEAN_MR2..Build.VERSION_CODES.LOLLIPOP_MR1
-            Encryption(context, range).encrypt("foo")
+            Encryption(context, range).encrypt("foo").decode().get().toInt()
         }
-        val expected = "${Build.VERSION_CODES.JELLY_BEAN_MR2}"
-        assertThat(result).startsWith(expected)
+        assertThat(result).isEqualTo(expected)
     }
 
     @Test(expected = IllegalStateException::class)
     fun jelly_bean_flag_unsupported() {
         runBlocking {
+            val buffer = ByteBuffer.allocate(25).putInt(Build.VERSION_CODES.JELLY_BEAN_MR2)
             val range = Build.VERSION_CODES.BASE..Build.VERSION_CODES.JELLY_BEAN_MR1
-            Encryption(context, range).decrypt("${Build.VERSION_CODES.JELLY_BEAN_MR2}|||")
+            Encryption(context, range).decrypt(buffer.encode())
         }
     }
 
@@ -91,21 +95,22 @@ class EncryptionTest {
     @Test
     fun marshmallow_flag_set() {
         assumeTrue(!context.packageManager.hasStrongBox())
-        val expected = "${Build.VERSION_CODES.M}"
+        val expected = Build.VERSION_CODES.M
         val result = runBlocking {
             val range = Build.VERSION_CODES.M..Build.VERSION_CODES.O_MR1
-            Encryption(context, range).encrypt("foo")
+            Encryption(context, range).encrypt("foo").decode().get().toInt()
         }
-        assertThat(result).startsWith(expected)
+        assertThat(result).isEqualTo(expected)
     }
 
 
     @Test(expected = IllegalStateException::class)
     fun marshmallow_flag_unsupported() {
         runBlocking {
+            val buffer = ByteBuffer.allocate(25).putInt(Build.VERSION_CODES.M)
             val max = min(Build.VERSION.SDK_INT, Build.VERSION_CODES.LOLLIPOP_MR1)
             val range = Build.VERSION_CODES.BASE..max
-            Encryption(context, range).decrypt("${Build.VERSION_CODES.M}|||")
+            Encryption(context, range).decrypt(buffer.encode())
         }
     }
 
@@ -113,20 +118,21 @@ class EncryptionTest {
     @Test
     fun pie_flag_set() {
         assumeTrue(context.packageManager.hasStrongBox())
-        val expected = "${Build.VERSION_CODES.P}"
+        val expected = Build.VERSION_CODES.P
         val result = runBlocking {
             val range = Build.VERSION_CODES.P..Build.VERSION.SDK_INT
-            Encryption(context, range).encrypt("foo")
+            Encryption(context, range).encrypt("foo").decode().get().toInt()
         }
-        assertThat(result).startsWith(expected)
+        assertThat(result).isEqualTo(expected)
     }
 
     @Test(expected = IllegalStateException::class)
     fun pie_flag_unsupported() {
         runBlocking {
+            val buffer = ByteBuffer.allocate(25).putInt(Build.VERSION_CODES.P)
             val max = min(Build.VERSION.SDK_INT, Build.VERSION_CODES.O_MR1)
             val range = Build.VERSION_CODES.BASE..max
-            Encryption(context, range).decrypt("${Build.VERSION_CODES.P}|||")
+            Encryption(context, range).decrypt(buffer.encode())
         }
     }
 

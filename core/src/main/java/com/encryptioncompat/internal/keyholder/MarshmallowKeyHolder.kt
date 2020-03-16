@@ -46,7 +46,7 @@ internal class MarshmallowKeyHolder(context: Context) : KeyHolder {
             .generateKey()
     }
 
-    override fun getEncryptBundle() = KeyBundle(storedKey, null)
+    override fun getEncryptBundle() = KeyBundle(storedKey, ByteArray(0))
 
-    override fun getDecryptKey(metadata: String): Key = storedKey
+    override fun getDecryptKey(metadata: ByteArray): Key = storedKey
 }

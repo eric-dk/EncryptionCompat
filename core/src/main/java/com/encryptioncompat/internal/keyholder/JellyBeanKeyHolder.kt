@@ -21,7 +21,9 @@ import android.annotation.TargetApi
 import android.content.Context
 import android.os.Build
 import android.security.KeyPairGeneratorSpec
-import com.encryptioncompat.internal.*
+import com.encryptioncompat.internal.KeyBundle
+import com.encryptioncompat.internal.KeyHolder
+import com.encryptioncompat.internal.appName
 import java.math.BigInteger
 import java.security.*
 import java.util.*
@@ -32,8 +34,7 @@ import javax.security.auth.x500.X500Principal
 @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
 internal class JellyBeanKeyHolder(context: Context) : KeyHolder {
     private val keyAlias = "${context.appName}-JB"
-    private val keySpec = KeyPairGeneratorSpec
-        .Builder(context)
+    private val keySpec = KeyPairGeneratorSpec.Builder(context)
         .setAlias(keyAlias)
         .setSerialNumber(BigInteger.ONE)
         .setSubject(X500Principal("CN=$keyAlias CA Certificate"))
@@ -41,7 +42,7 @@ internal class JellyBeanKeyHolder(context: Context) : KeyHolder {
         .setEndDate(Calendar.getInstance().apply { add(Calendar.YEAR, 20) }.time)
         .build()
 
-    private val cipher by lazy { Cipher.getInstance("RSA/ECB/PKCS1Padding") }
+    private val cipher by lazy { Cipher.getInstance("RSA/NONE/PKCS1Padding") }
     private val storedKey by lazy {
         val store = KeyStore.getInstance(KeyHolder.PROVIDER)
         store.load(null)
@@ -65,11 +66,11 @@ internal class JellyBeanKeyHolder(context: Context) : KeyHolder {
 
     override fun getEncryptBundle(): KeyBundle {
         cipher.init(Cipher.WRAP_MODE, storedKey.public)
-        return KeyBundle(wrappedKey, cipher.wrap(wrappedKey).encode())
+        return KeyBundle(wrappedKey, cipher.wrap(wrappedKey))
     }
 
-    override fun getDecryptKey(metadata: String): Key {
+    override fun getDecryptKey(metadata: ByteArray): Key {
         cipher.init(Cipher.UNWRAP_MODE, storedKey.private)
-        return cipher.unwrap(metadata.decode(), KeyHolder.AES, Cipher.SECRET_KEY)
+        return cipher.unwrap(metadata, KeyHolder.AES, Cipher.SECRET_KEY)
     }
 }

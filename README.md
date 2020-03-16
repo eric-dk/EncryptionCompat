@@ -46,7 +46,7 @@ RxEncryptionCompat encryption = new RxEncryptionCompat(context, minSdk);
 
 #### Message handling
 
-EncryptionCompat runs on an independent single thread to ensure sequential key access. You can retrieve output by providing a callback, handling the suspending function, or observing the [RxJava Single](http://reactivex.io/documentation/single.html). Please note that 3.x.x is not backwards compatible and cannot read previously encrypted messages.
+EncryptionCompat runs on an independent single thread to ensure sequential key access. You can retrieve output by providing a callback, handling the suspending function, or observing the [RxJava Single](http://reactivex.io/documentation/single.html). Please note that 4.x.x and 3.x.x are not backwards compatible and cannot read previously encrypted messages.
 
 ## Gradle
 
@@ -64,9 +64,9 @@ allprojects {
 Add the dependency to the module `build.gradle`:
 ```gradle
 // If using callbacks or coroutines
-implementation 'com.github.eric-dk.EncryptionCompat:core:3.0.0'
+implementation 'com.github.eric-dk.EncryptionCompat:core:4.0.0'
 // If using RxJava only
-implementation 'com.github.eric-dk.EncryptionCompat:rx:3.0.0'
+implementation 'com.github.eric-dk.EncryptionCompat:rx:4.0.0'
 ```
 
 ## FAQ
@@ -85,6 +85,8 @@ Yes. The Android Keystore reliability depends on device; manufacturer [implement
 
 ## Changelog
 
+* **4.0.0**
+    * Condenses ciphertext
 * **3.0.0**
     * Supports coroutines and RxJava
 * **2.0.2**

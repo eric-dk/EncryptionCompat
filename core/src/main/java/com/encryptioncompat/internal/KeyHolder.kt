@@ -26,5 +26,5 @@ internal interface KeyHolder {
     }
 
     fun getEncryptBundle(): KeyBundle
-    fun getDecryptKey(metadata: String): Key
+    fun getDecryptKey(metadata: ByteArray): Key
 }

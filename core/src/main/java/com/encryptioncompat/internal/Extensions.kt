@@ -22,8 +22,15 @@ import android.os.Build
 import android.util.Base64
 import android.util.SparseArray
 import androidx.core.util.size
+import java.nio.ByteBuffer
 
-internal fun ByteArray.encode() = Base64.encodeToString(this, Base64.DEFAULT)
+internal fun ByteBuffer.encode(): String {
+    val buffer = asReadOnlyBuffer()
+    val bytes = ByteArray(buffer.limit())
+    buffer.position(0)
+    buffer.get(bytes)
+    return Base64.encodeToString(bytes, Base64.DEFAULT)
+}
 
 internal inline val Context.appName get() = "${applicationInfo.loadLabel(packageManager)}"
 
@@ -40,4 +47,7 @@ internal fun <E> SparseArray<E>.reverseKeyIterator(): IntIterator {
     }
 }
 
-internal fun String.decode() = Base64.decode(this, Base64.DEFAULT)
+internal fun String.decode(): ByteBuffer {
+    val bytes = Base64.decode(this, Base64.DEFAULT)
+    return ByteBuffer.wrap(bytes).asReadOnlyBuffer()
+}
