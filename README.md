@@ -81,7 +81,7 @@ Probably. Randomization may have weak entropy depending on [manufacturer](https:
 No. Decryption will retain previous keys; subsequent messages may be encrypted with new, more secure keys.
 
 #### Can keys be irreversibly lost?
-Yes. The Android Keystore reliability depends on device; manufacturer [implementations may](https://doridori.github.io/android-security-the-forgetful-keystore/) (have bugs)[https://alexbakker.me/post/mysterious-google-titan-m-bug-cve-2019-9465.html]. Robust error handling is recommended.
+Yes. The Android Keystore reliability depends on device; manufacturer [implementations may](https://doridori.github.io/android-security-the-forgetful-keystore/) [have bugs](https://alexbakker.me/post/mysterious-google-titan-m-bug-cve-2019-9465.html). Robust error handling is recommended.
 
 ## Changelog
 

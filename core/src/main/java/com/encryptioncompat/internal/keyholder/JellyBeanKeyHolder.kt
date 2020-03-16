@@ -37,9 +37,9 @@ internal class JellyBeanKeyHolder(context: Context) : KeyHolder {
     private val keySpec = KeyPairGeneratorSpec.Builder(context)
         .setAlias(keyAlias)
         .setSerialNumber(BigInteger.ONE)
-        .setSubject(X500Principal("CN=$keyAlias CA Certificate"))
-        .setStartDate(Calendar.getInstance().time)
-        .setEndDate(Calendar.getInstance().apply { add(Calendar.YEAR, 20) }.time)
+        .setSubject(X500Principal("CN=fake"))
+        .setStartDate(Date(0L))
+        .setEndDate(Date(2461449600000L))
         .build()
 
     private val cipher by lazy { Cipher.getInstance("RSA/NONE/PKCS1Padding") }
@@ -56,7 +56,7 @@ internal class JellyBeanKeyHolder(context: Context) : KeyHolder {
             // Generate key
             ?: KeyPairGenerator.getInstance("RSA", KeyHolder.PROVIDER)
                 .apply { initialize(keySpec) }
-                .genKeyPair()
+                .generateKeyPair()
     }
     private val wrappedKey by lazy {
         KeyGenerator.getInstance(KeyHolder.AES)

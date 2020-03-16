@@ -62,9 +62,7 @@ internal class Encryption(context: Context, sdkRange: IntRange) {
             for (sdk in sdkToKeyHolders.reverseKeyIterator()) {
                 try {
                     return@withContext encrypt(sdk, input)
-                } catch (throwable: Throwable) {
-                    throwable.printStackTrace()
-                }
+                } catch (throwable: Throwable) {}
             }
             throw IllegalStateException("Cannot generate key")
         }
@@ -91,11 +89,10 @@ internal class Encryption(context: Context, sdkRange: IntRange) {
         val bundle = sdkToKeyHolders[sdk].getEncryptBundle()
         cipher.init(Cipher.ENCRYPT_MODE, bundle.key)
 
-        val iv = cipher.iv
         val text = cipher.doFinal(input.toByteArray())
         return ByteBuffer.allocate(25 + text.size + bundle.metadata.size)
             .put(sdk.toByte())
-            .put(iv)
+            .put(cipher.iv)
             .putInt(text.size)
             .put(text)
             .putInt(bundle.metadata.size)
