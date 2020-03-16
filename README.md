@@ -24,22 +24,22 @@ Due to manufacturer fragmentation, EncryptionCompat will attempt the highest pos
 
 EncryptionCompat requires `Context` and a minimum platform, which should be equal to `minSdkVersion`. However, going lower increases compatibility with troublesome devices (see sample).
 
-**Kotlin**
+*Kotlin*
 ```kotlin
 val encryption = EncryptionCompat(context, minSdk)
 ```
-**Java**
+*Java*
 ```java
 EncryptionCompat encryption = new EncryptionCompat(context, minSdk);
 ```
 
 A version with [RxJava 2.x](https://github.com/ReactiveX/RxJava) bindings is also available.
 
-**Kotlin**
+*Kotlin*
 ```kotlin
 val encryption = RxEncryptionCompat(context, minSdk)
 ```
-**Java**
+*Java*
 ```java
 RxEncryptionCompat encryption = new RxEncryptionCompat(context, minSdk);
 ```
@@ -78,7 +78,10 @@ No. EncryptionCompat provides confidentiality only. Performing integrity checks 
 Probably. Randomization may have weak entropy depending on [manufacturer](https://android-developers.googleblog.com/2013/08/some-securerandom-thoughts.html). The initialization vector may also be [zero-filled](https://stackoverflow.com/a/31037133).
 
 #### Will upgrading Android invalidate data?
-No. Decryption should reuse previous keys [assuming no loss](https://doridori.github.io/android-security-the-forgetful-keystore/). Subsequent messages will be encrypted with new, more secure keys.
+No. Decryption will retain previous keys; subsequent messages may be encrypted with new, more secure keys.
+
+#### Can keys be irreversibly lost?
+Yes. The Android Keystore reliability depends on device; manufacturer [implementations may](https://doridori.github.io/android-security-the-forgetful-keystore/) (have bugs)[https://alexbakker.me/post/mysterious-google-titan-m-bug-cve-2019-9465.html]. Robust error handling is recommended.
 
 ## Changelog
 
