@@ -48,6 +48,7 @@ class EncryptionCompat(context: Context, minSdk: Int) {
 
     private val encryption = Encryption(context.applicationContext, minSdk..Build.VERSION.SDK_INT)
 
+    //region Encrypt
     /**
      * Encrypts {@code input}. Key management depends on device support.
      * Can be called from any thread; encryption is run on independent thread, callback on main.
@@ -74,7 +75,9 @@ class EncryptionCompat(context: Context, minSdk: Int) {
      */
     @CheckResult
     suspend fun encrypt(input: String) = encryption.encrypt(input)
+    //endregion
 
+    //region Decrypt
     /**
      * Decrypts {@code input}. Will throw exception if encoded mode unsupported or key unavailable.
      * Can be called from any thread; encryption is run on independent thread, callback on main.
@@ -101,4 +104,5 @@ class EncryptionCompat(context: Context, minSdk: Int) {
      */
     @CheckResult
     suspend fun decrypt(input: String) = encryption.decrypt(input)
+    //endregion
 }

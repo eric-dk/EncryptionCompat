@@ -16,21 +16,15 @@
 
 package com.encryptioncompat.internal
 
+import java.nio.ByteBuffer
 import java.security.Key
 
 /**
- * AES key generation, storage, and retrieval.
+ * AES cipher implementation.
  */
-internal interface KeyHolder {
-    companion object {
-        const val AES = "AES"
-        const val LENGTH = 128
-        const val STORE = "AndroidKeyStore"
-    }
+internal interface CipherHolder {
+    fun encrypt(key: Key, input: ByteArray, aad: ByteArray): ByteArray
 
-    // Alias unique to app
-    val keyAlias: String
-
-    fun getEncryptBundle(): KeyBundle
-    fun getDecryptKey(supplement: ByteArray): Key
+    // Using byte buffers to reduce copy operations
+    fun decrypt(key: Key, input: ByteBuffer, aad: ByteBuffer): ByteArray
 }

@@ -19,21 +19,30 @@ package com.encryptioncompat.internal.keyholder
 
 import android.annotation.TargetApi
 import android.content.Context
-import android.os.Build
+import android.os.Build.VERSION_CODES.JELLY_BEAN_MR2
 import android.security.KeyPairGeneratorSpec
 import com.encryptioncompat.internal.KeyBundle
 import com.encryptioncompat.internal.KeyHolder
-import com.encryptioncompat.internal.appName
+import com.encryptioncompat.internal.getKeyPair
 import java.math.BigInteger
-import java.security.*
+import java.security.Key
+import java.security.KeyPairGenerator
+import java.security.KeyStore
 import java.util.*
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.security.auth.x500.X500Principal
 
-@TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
+/**
+ * Stores RSA key in Android Keystore, wraps and unwraps per-message AES key.
+ *
+ * @param context       Application context
+ */
+@TargetApi(JELLY_BEAN_MR2)
 internal class JellyBeanKeyHolder(context: Context) : KeyHolder {
-    private val keyAlias = "${context.appName}-JB"
+    override val keyAlias = "${context.packageName}-ECJ"
+
+    // Key good until 2048-1-1
     private val keySpec = KeyPairGeneratorSpec.Builder(context)
         .setAlias(keyAlias)
         .setSerialNumber(BigInteger.ONE)
@@ -42,21 +51,15 @@ internal class JellyBeanKeyHolder(context: Context) : KeyHolder {
         .setEndDate(Date(2461449600000L))
         .build()
 
-    private val cipher by lazy { Cipher.getInstance("RSA/NONE/PKCS1Padding") }
+    // ECB for compatibility; unused
+    private val cipher by lazy { Cipher.getInstance("RSA/ECB/PKCS1Padding") }
     private val storedKey by lazy {
-        val store = KeyStore.getInstance(KeyHolder.PROVIDER)
+        val store = KeyStore.getInstance(KeyHolder.STORE)
         store.load(null)
-        store.getCertificate(keyAlias)
-            // Existing key
-            ?.let { certificate ->
-                store.getKey(keyAlias, null)?.let { key ->
-                    (key as? PrivateKey)?.let { KeyPair(certificate.publicKey, it) }
-                }
-            }
-            // Generate key
-            ?: KeyPairGenerator.getInstance("RSA", KeyHolder.PROVIDER)
+        store.getKeyPair(keyAlias)
+            ?: KeyPairGenerator.getInstance("RSA", KeyHolder.STORE)
                 .apply { initialize(keySpec) }
-                .generateKeyPair()
+                .genKeyPair()
     }
     private val wrappedKey by lazy {
         KeyGenerator.getInstance(KeyHolder.AES)
@@ -69,8 +72,8 @@ internal class JellyBeanKeyHolder(context: Context) : KeyHolder {
         return KeyBundle(wrappedKey, cipher.wrap(wrappedKey))
     }
 
-    override fun getDecryptKey(metadata: ByteArray): Key {
+    override fun getDecryptKey(supplement: ByteArray): Key {
         cipher.init(Cipher.UNWRAP_MODE, storedKey.private)
-        return cipher.unwrap(metadata, KeyHolder.AES, Cipher.SECRET_KEY)
+        return cipher.unwrap(supplement, KeyHolder.AES, Cipher.SECRET_KEY)
     }
 }

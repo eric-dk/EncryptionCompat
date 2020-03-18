@@ -18,48 +18,49 @@ package com.encryptioncompat.internal.keyholder
 
 import android.content.Context
 import androidx.core.content.edit
+import com.encryptioncompat.internal.Encryption
 import com.encryptioncompat.internal.KeyBundle
 import com.encryptioncompat.internal.KeyHolder
+import com.encryptioncompat.internal.use
 import java.security.Key
-import java.security.SecureRandom
 import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.PBEKeySpec
 import javax.crypto.spec.SecretKeySpec
 
-internal class IceCreamSandwichKeyHolder(context: Context) : KeyHolder {
-    private companion object {
-        const val NAME = "EC-ICS"
-    }
-
-    private val secureRandom = SecureRandom()
-    private val sharedPreferences = context.getSharedPreferences(NAME, Context.MODE_PRIVATE)
+/**
+ * Stores password in Shared Preferences; recreates per-message AES key from password and salt.
+ *
+ * @param context       Application context
+ */
+internal class BaseKeyHolder(context: Context) : KeyHolder {
+    override val keyAlias = "${context.packageName}-EC1"
+    private val sharedPreferences = context.getSharedPreferences(keyAlias, Context.MODE_PRIVATE)
 
     private val keyFactory by lazy { SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1") }
     private val password by lazy {
-        sharedPreferences.getString(NAME, null)
-            ?.toCharArray()
-            ?: run {
-                // Generate password
-                val bytes = ByteArray(64)
-                secureRandom.nextBytes(bytes)
-
-                val string = String(bytes)
-                sharedPreferences.edit { putString(NAME, string) }
-                string.toCharArray()
+        val string = sharedPreferences.getString(keyAlias, null)
+            // Generate 32 character password
+            ?: ByteArray(32).use { bytes ->
+                Encryption.RANDOM.nextBytes(bytes)
+                String(bytes).also { sharedPreferences.edit { putString(keyAlias, it) } }
             }
+        string.toCharArray()
     }
 
     override fun getEncryptBundle(): KeyBundle {
+        // Generate salt
         val salt = ByteArray(KeyHolder.LENGTH / 8)
-        secureRandom.nextBytes(salt)
+        Encryption.RANDOM.nextBytes(salt)
         return KeyBundle(getKey(salt), salt)
     }
 
-    override fun getDecryptKey(metadata: ByteArray) = getKey(metadata)
+    override fun getDecryptKey(supplement: ByteArray) = getKey(supplement)
 
     private fun getKey(salt: ByteArray): Key {
         val spec = PBEKeySpec(password, salt, 10_000, KeyHolder.LENGTH)
         val key = keyFactory.generateSecret(spec).encoded
+
+        // Transcode with initialized IV
         return SecretKeySpec(key, KeyHolder.AES)
     }
 }

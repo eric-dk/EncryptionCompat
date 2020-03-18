@@ -18,35 +18,21 @@ package com.encryptioncompat.internal.keyholder
 
 import android.annotation.TargetApi
 import android.content.Context
-import android.os.Build
+import android.os.Build.VERSION_CODES.M
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
-import com.encryptioncompat.internal.KeyBundle
 import com.encryptioncompat.internal.KeyHolder
-import com.encryptioncompat.internal.appName
-import java.security.Key
-import java.security.KeyStore
-import javax.crypto.KeyGenerator
 
-@TargetApi(Build.VERSION_CODES.M)
-internal class MarshmallowKeyHolder(context: Context) : KeyHolder {
-    private val keyAlias = "${context.appName}-M"
-    private val keySpec = KeyGenParameterSpec
+/**
+ * Generates, stores, and retrieves global AES key from Android Keystore.
+ */
+@TargetApi(M)
+internal class MarshmallowKeyHolder(context: Context) : AesKeyHolder() {
+    override val keyAlias = "${context.packageName}-ECM"
+    override val keySpec = KeyGenParameterSpec
         .Builder(keyAlias, KeyProperties.PURPOSE_DECRYPT or KeyProperties.PURPOSE_ENCRYPT)
-        .setBlockModes(KeyProperties.BLOCK_MODE_CBC)
-        .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_PKCS7)
+        .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
+        .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
         .setKeySize(KeyHolder.LENGTH)
         .build()
-
-    private val storedKey by lazy {
-        val store = KeyStore.getInstance(KeyHolder.PROVIDER)
-        store.load(null)
-        store.getKey(keyAlias, null) ?: KeyGenerator.getInstance(KeyHolder.AES, KeyHolder.PROVIDER)
-            .apply { init(keySpec) }
-            .generateKey()
-    }
-
-    override fun getEncryptBundle() = KeyBundle(storedKey, ByteArray(0))
-
-    override fun getDecryptKey(metadata: ByteArray): Key = storedKey
 }

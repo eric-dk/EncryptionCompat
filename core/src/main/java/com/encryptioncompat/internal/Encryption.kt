@@ -17,95 +17,112 @@
 package com.encryptioncompat.internal
 
 import android.content.Context
-import android.os.Build
+import android.os.Build.VERSION_CODES.*
 import android.util.SparseArray
-import androidx.core.util.contains
-import com.encryptioncompat.internal.keyholder.IceCreamSandwichKeyHolder
+import com.encryptioncompat.internal.cipherholder.BaseCipherHolder
+import com.encryptioncompat.internal.cipherholder.LollipopCipherHolder
+import com.encryptioncompat.internal.keyholder.BaseKeyHolder
 import com.encryptioncompat.internal.keyholder.JellyBeanKeyHolder
 import com.encryptioncompat.internal.keyholder.MarshmallowKeyHolder
 import com.encryptioncompat.internal.keyholder.PieKeyHolder
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.withContext
 import java.nio.ByteBuffer
+import java.security.SecureRandom
 import java.util.concurrent.Executors
-import javax.crypto.Cipher
-import javax.crypto.spec.IvParameterSpec
 
+/**
+ * Internal engine; encompasses test configurations as well.
+ *
+ * @param context       Application context
+ * @param sdkRange      Supported modes
+ */
 internal class Encryption(context: Context, sdkRange: IntRange) {
-    private companion object {
-        val SHARED = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+    companion object {
+        // Serialize operations since Android Keystore is not thread-safe.
+        private val FIFO = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+
+        // Share random instance to prevent duplicate instantiation.
+        val RANDOM by lazy { SecureRandom() }
     }
 
-    private val sdkToKeyHolders = SparseArray<KeyHolder>(4)
-        .apply {
-            if (sdkRange.first < Build.VERSION_CODES.JELLY_BEAN_MR2) {
-                put(Build.VERSION_CODES.ICE_CREAM_SANDWICH, IceCreamSandwichKeyHolder(context))
-            }
-            if (sdkRange.contains(Build.VERSION_CODES.JELLY_BEAN_MR2)) {
-                put(Build.VERSION_CODES.JELLY_BEAN_MR2, JellyBeanKeyHolder(context))
-            }
-            if (sdkRange.contains(Build.VERSION_CODES.M)) {
-                put(Build.VERSION_CODES.M, MarshmallowKeyHolder(context))
-            }
-            if (sdkRange.contains(Build.VERSION_CODES.P) && context.packageManager.hasStrongBox()) {
-                put(Build.VERSION_CODES.P, PieKeyHolder(context))
-            }
-        }
+    private val modeToCipherHolders = SparseArray<CipherHolder>(2).apply {
+        if (sdkRange.first < LOLLIPOP) put(BASE, BaseCipherHolder())
+        if (sdkRange.last >= LOLLIPOP) put(LOLLIPOP, LollipopCipherHolder())
+    }
+    private val modeToKeyHolders = SparseArray<KeyHolder>(4).apply {
+        if (sdkRange.first < JELLY_BEAN_MR2) put(BASE, BaseKeyHolder(context))
+        if (sdkRange.contains(JELLY_BEAN_MR2)) put(JELLY_BEAN_MR2, JellyBeanKeyHolder(context))
+        if (sdkRange.contains(M)) put(M, MarshmallowKeyHolder(context))
+        if (sdkRange.last >= P && context.hasStrongBox()) put(P, PieKeyHolder(context))
+    }
 
-    private val cipher by lazy { Cipher.getInstance("AES/CBC/PKCS5Padding") }
-
+    //region Encrypt
     suspend fun encrypt(input: String): String {
         input.isNotEmpty() || return input
 
-        // Iterate available keys
-        return withContext(SHARED) {
-            for (sdk in sdkToKeyHolders.reverseKeyIterator()) {
-                try {
-                    return@withContext encrypt(sdk, input)
-                } catch (throwable: Throwable) {}
+        return withContext(FIFO) {
+            for (mode in modeToKeyHolders.reverseKeyIterator()) {
+                // Attempt to generate and store key, preemptively removing key modes that fail.
+                val bundle = try {
+                    modeToKeyHolders[mode].getEncryptBundle()
+                } catch (exception: Exception) {
+                    modeToKeyHolders.delete(mode)
+                    continue
+                }
+
+                // Always select highest cipher mode for encryption.
+                val modes = byteArrayOf(mode.toByte(), modeToCipherHolders.lastKey.toByte())
+                return@withContext assemble(modes, bundle, input.toByteArray())
             }
             throw IllegalStateException("Cannot generate key")
         }
     }
 
+    private fun assemble(modes: ByteArray, bundle: KeyBundle, input: ByteArray): String {
+        val cipherHolder = modeToCipherHolders[modes[1].toInt()]
+        return cipherHolder.encrypt(bundle.key, input, modes).use { cipherText ->
+
+            // Serialize segments into message:
+            // [key mode][cipher mode][key supplement length][key supplement data]...[cipher text]
+            ByteBuffer.allocate(modes.size + 4 + bundle.supplement.size + cipherText.size)
+                .put(modes)
+                .putInt(bundle.supplement.size)
+                .put(bundle.supplement)
+                .put(cipherText)
+                .array()
+                .encodeBase64()
+        }
+    }
+    //endregion
+
+    //region Decrypt
     suspend fun decrypt(input: String): String {
         input.isNotEmpty() || return input
 
-        // Segment input
-        return withContext(SHARED) {
-            val buffer = input.decode()
+        return withContext(FIFO) {
+            val buffer = ByteBuffer.wrap(input.decodeBase64())
 
-            val sdk = buffer.get().toInt()
-            val iv = ByteArray(16).apply { buffer.get(this) }
-            val text = ByteArray(buffer.int).apply { buffer.get(this) }
-            val metadata = ByteArray(buffer.int).apply { buffer.get(this) }
+            // Deserialize message into segments:
+            // [key mode][cipher mode][key supplement length][key supplement data]...[cipher text]
+            val modes = buffer.duplicate().apply { limit(2) }
+            val supplement = ByteArray(buffer.int).apply { buffer[this] }
+            val data = buffer.slice()
 
-            decrypt(sdk, iv, text, metadata)
+            return@withContext disassemble(modes, data, supplement)
         }
     }
 
-    private fun encrypt(sdk: Int, input: String): String {
-        // Initialize cipher
-        val bundle = sdkToKeyHolders[sdk].getEncryptBundle()
-        cipher.init(Cipher.ENCRYPT_MODE, bundle.key)
+    private fun disassemble(modes: ByteBuffer, data: ByteBuffer, supplement: ByteArray): String {
+        val keyHolder = modeToKeyHolders[modes[0].toInt()]
+        val cipherHolder = modeToCipherHolders[modes[1].toInt()]
 
-        val text = cipher.doFinal(input.toByteArray())
-        return ByteBuffer.allocate(25 + text.size + bundle.metadata.size)
-            .put(sdk.toByte())
-            .put(cipher.iv)
-            .putInt(text.size)
-            .put(text)
-            .putInt(bundle.metadata.size)
-            .put(bundle.metadata)
-            .encode()
+        // Can happen if minSdk is upped across a mode boundary.
+        keyHolder ?: throw IllegalStateException("Cannot retrieve key")
+        cipherHolder ?: throw IllegalStateException("Cannot retrieve cipher")
+
+        val key = keyHolder.getDecryptKey(supplement)
+        return String(cipherHolder.decrypt(key, data, modes))
     }
-
-    private fun decrypt(sdk: Int, iv: ByteArray, text: ByteArray, metadata: ByteArray): String {
-        // Choose keys
-        sdkToKeyHolders.contains(sdk) || throw IllegalStateException("Cannot retrieve key")
-
-        val key = sdkToKeyHolders[sdk].getDecryptKey(metadata)
-        cipher.init(Cipher.DECRYPT_MODE, key, IvParameterSpec(iv))
-        return String(cipher.doFinal(text))
-    }
+    //endregion
 }

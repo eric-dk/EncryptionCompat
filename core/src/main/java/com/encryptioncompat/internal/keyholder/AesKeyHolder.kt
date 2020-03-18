@@ -17,23 +17,31 @@
 package com.encryptioncompat.internal.keyholder
 
 import android.annotation.TargetApi
-import android.content.Context
-import android.os.Build.VERSION_CODES.P
+import android.os.Build.VERSION_CODES.M
 import android.security.keystore.KeyGenParameterSpec
-import android.security.keystore.KeyProperties
+import com.encryptioncompat.internal.KeyBundle
 import com.encryptioncompat.internal.KeyHolder
+import java.security.Key
+import java.security.KeyStore
+import javax.crypto.KeyGenerator
 
 /**
  * Generates, stores, and retrieves global AES key from Android Keystore.
  */
-@TargetApi(P)
-internal class PieKeyHolder(context: Context) : AesKeyHolder() {
-    override val keyAlias = "${context.packageName}-ECP"
-    override val keySpec = KeyGenParameterSpec
-        .Builder(keyAlias, KeyProperties.PURPOSE_DECRYPT or KeyProperties.PURPOSE_ENCRYPT)
-        .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
-        .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
-        .setKeySize(KeyHolder.LENGTH)
-        .setIsStrongBoxBacked(true)
-        .build()
+@TargetApi(M)
+internal abstract class AesKeyHolder : KeyHolder {
+    abstract val keySpec: KeyGenParameterSpec
+
+    private val storedKey by lazy {
+        val store = KeyStore.getInstance(KeyHolder.STORE)
+        store.load(null)
+        store.getKey(keyAlias, null)
+            ?: KeyGenerator.getInstance(KeyHolder.AES, KeyHolder.STORE)
+                .apply { init(keySpec) }
+                .generateKey()
+    }
+
+    override fun getEncryptBundle() = KeyBundle(storedKey)
+
+    override fun getDecryptKey(supplement: ByteArray): Key = storedKey
 }

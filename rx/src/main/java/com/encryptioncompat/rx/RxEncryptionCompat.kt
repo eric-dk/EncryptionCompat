@@ -22,7 +22,7 @@ import com.encryptioncompat.EncryptionCompat
 import kotlinx.coroutines.rx2.rxSingle
 
 /**
- * Encrypts with AES256/CBC/PKCS7 key, but the key management scheme depends on
+ * Encrypts with AES/CBC/PKCS7 key, but the key management scheme depends on
  * device support:
  * <p><ul>
  * <li>Least secure (below API 18): Per-message key is created from random salt and global password

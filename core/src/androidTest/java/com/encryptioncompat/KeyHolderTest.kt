@@ -17,12 +17,12 @@
 package com.encryptioncompat
 
 import android.content.Context
-import android.os.Build
+import android.os.Build.VERSION_CODES.*
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.SdkSuppress
 import com.encryptioncompat.internal.hasStrongBox
-import com.encryptioncompat.internal.keyholder.IceCreamSandwichKeyHolder
+import com.encryptioncompat.internal.keyholder.BaseKeyHolder
 import com.encryptioncompat.internal.keyholder.JellyBeanKeyHolder
 import com.encryptioncompat.internal.keyholder.MarshmallowKeyHolder
 import com.encryptioncompat.internal.keyholder.PieKeyHolder
@@ -42,53 +42,57 @@ class KeyHolderTest {
     }
 
     @Test
-    fun ice_cream_sandwich_no_exceptions_on_instantiation() {
-        val result = kotlin.runCatching { IceCreamSandwichKeyHolder(context) }
-        assertThat(result.isSuccess).isTrue()
+    fun base_no_exceptions_on_instantiation() {
+        val result = kotlin.runCatching { BaseKeyHolder(context) }.isSuccess
+        assertThat(result).isTrue()
     }
 
     @Test
-    fun ice_cream_sandwich_encrypt_key_has_metadata() {
-        assertThat(IceCreamSandwichKeyHolder(context).getEncryptBundle().metadata).isNotEmpty()
+    fun base_encrypt_key_has_metadata() {
+        val result = BaseKeyHolder(context).getEncryptBundle().supplement
+        assertThat(result).isNotEmpty()
     }
 
-    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.JELLY_BEAN_MR2)
+    @SdkSuppress(minSdkVersion = JELLY_BEAN_MR2)
     @Test
     fun jelly_bean_no_exceptions_on_instantiation() {
-        val result = kotlin.runCatching { JellyBeanKeyHolder(context) }
-        assertThat(result.isSuccess).isTrue()
+        val result = kotlin.runCatching { JellyBeanKeyHolder(context) }.isSuccess
+        assertThat(result).isTrue()
     }
 
-    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.JELLY_BEAN_MR2)
+    @SdkSuppress(minSdkVersion = JELLY_BEAN_MR2)
     @Test
     fun jelly_bean_encrypt_key_has_metadata() {
-        assertThat(JellyBeanKeyHolder(context).getEncryptBundle().metadata).isNotEmpty()
+        val result = JellyBeanKeyHolder(context).getEncryptBundle().supplement
+        assertThat(result).isNotEmpty()
     }
 
-    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.M)
+    @SdkSuppress(minSdkVersion = M)
     @Test
     fun marshmallow_no_exceptions_on_instantiation() {
-        val result = kotlin.runCatching { MarshmallowKeyHolder(context) }
-        assertThat(result.isSuccess).isTrue()
+        val result = kotlin.runCatching { MarshmallowKeyHolder(context) }.isSuccess
+        assertThat(result).isTrue()
     }
 
-    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.M)
+    @SdkSuppress(minSdkVersion = M)
     @Test
     fun marshmallow_encrypt_key_has_null_metadata() {
-        assertThat(MarshmallowKeyHolder(context).getEncryptBundle().metadata).isNull()
+        val result = MarshmallowKeyHolder(context).getEncryptBundle().supplement
+        assertThat(result).isNull()
     }
 
-    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.P)
+    @SdkSuppress(minSdkVersion = P)
     @Test
     fun pie_no_exceptions_on_instantiation() {
-        val result = kotlin.runCatching { PieKeyHolder(context) }
-        assertThat(result.isSuccess).isTrue()
+        val result = kotlin.runCatching { PieKeyHolder(context) }.isSuccess
+        assertThat(result).isTrue()
     }
 
-    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.P)
+    @SdkSuppress(minSdkVersion = P)
     @Test
     fun pie_encrypt_key_has_null_metadata() {
-        assumeTrue(context.packageManager.hasStrongBox())
-        assertThat(PieKeyHolder(context).getEncryptBundle().metadata).isNull()
+        assumeTrue(context.hasStrongBox())
+        val result = PieKeyHolder(context).getEncryptBundle().supplement
+        assertThat(result).isNull()
     }
 }
