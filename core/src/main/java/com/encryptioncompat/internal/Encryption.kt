@@ -81,15 +81,15 @@ internal class Encryption(context: Context, sdkRange: IntRange) {
 
     private fun assemble(modes: ByteArray, bundle: KeyBundle, input: ByteArray): String {
         val cipherHolder = modeToCipherHolders[modes[1].toInt()]
-        return cipherHolder.encrypt(bundle.key, input, modes).use { cipherText ->
+        return cipherHolder.encrypt(bundle.key, input, modes).use { ciphertext ->
 
             // Serialize segments into message:
-            // [key mode][cipher mode][key supplement length][key supplement data]...[cipher text]
-            ByteBuffer.allocate(modes.size + 4 + bundle.supplement.size + cipherText.size)
+            // [key mode][cipher mode][key supplement length][key supplement data][cipher data]
+            ByteBuffer.allocate(modes.size + 4 + bundle.supplement.size + ciphertext.size)
                 .put(modes)
                 .putInt(bundle.supplement.size)
                 .put(bundle.supplement)
-                .put(cipherText)
+                .put(ciphertext)
                 .array()
                 .encodeBase64()
         }
@@ -104,8 +104,9 @@ internal class Encryption(context: Context, sdkRange: IntRange) {
             val buffer = ByteBuffer.wrap(input.decodeBase64())
 
             // Deserialize message into segments:
-            // [key mode][cipher mode][key supplement length][key supplement data]...[cipher text]
+            // [key mode][cipher mode][key supplement length][key supplement data][cipher data]
             val modes = buffer.duplicate().apply { limit(2) }
+            buffer.position(2)
             val supplement = ByteArray(buffer.int).apply { buffer[this] }
             val data = buffer.slice()
 

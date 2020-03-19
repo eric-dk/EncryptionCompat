@@ -1,92 +1,63 @@
 # EncryptionCompat
 
-[![](https://jitpack.io/v/com.github.eric-dk/EncryptionCompat.svg)](https://jitpack.io/#com.github.eric-dk/EncryptionCompat)
+String encryption on Android simplified. Intelligent key handling and automatic cipher management providing confidentiality, integrity, and authenticity. Supports down to API level 14 and fully backwards compatible when upgrading OS. Uses authenticated AES as cryptographic primitive.
 
-Android encryption simplified. Automatic key management, preferring secure hardware. Backwards compatible across platform versions. Best for obfuscating sensitive data.
+[![](https://jitpack.io/v/com.github.eric-dk/EncryptionCompat.svg)](https://jitpack.io/#com.github.eric-dk/EncryptionCompat) [![](https://jitci.com/gh/eric-dk/EncryptionCompat/svg)](https://jitci.com/gh/eric-dk/EncryptionCompat)
 
-**Carefully consider your threat model**. Encryption alone is not security; keys can be extracted given [enough means](https://developer.android.com/training/articles/keystore.html#ExtractionPrevention). All data that touches a client should be considered compromisable.
+**Important Note**: Moving to 4.x.x or 3.x.x from an older version requires a migration.
 
-Messages are encrypted with a *AES256/CBC/PKCS7* key, but the key management scheme depends on device support.
+## Features
 
-* **Least secure (below API 18)**: A per-message key is created from a random salt and a global password - stored in [shared preferences](https://developer.android.com/training/data-storage/shared-preferences). The initialization vector, ciphertext, and salt are then encoded.
+* **Flexible**: Use your preferred async handling via callback, Kotlin coroutines, or RxJava
+* **Lightweight**: No massive dependencies; built on standard Java and Android crypto libraries
+* **No-nonce-sense**: Really easy to integrate, really hard to mis-configure
 
-* **More secure (API 18-22)**: A per-instance key is wrapped with a global asymmetric key - saved in the [Android Keystore](https://developer.android.com/training/articles/keystore.html). The initialization vector, ciphertext, and wrapped key are then encoded.
+## Quick Start
 
-* **Most secure (API 23+)**: A global key is managed by the Android Keystore, which may be bound to a trusted execution environment. The initialization vector and ciphertext are then encoded.
-
-* **Most secure (API 28+)**: Same as above, but the key is stored in a [hardware security module](https://developer.android.com/training/articles/keystore#HardwareSecurityModule); only available on a [few devices](https://github.com/GrapheneOS/AttestationSamples). The initialization vector and ciphertext are then encoded.
-
-Due to manufacturer fragmentation, EncryptionCompat will attempt the highest possible scheme then fall through until reaching the specified minimum platform.
-
-## Usage
-
-#### Initialization
-
-EncryptionCompat requires `Context` and a minimum platform, which should be equal to `minSdkVersion`. However, going lower increases compatibility with troublesome devices (see sample).
-
-*Kotlin*
-```kotlin
-val encryption = EncryptionCompat(context, minSdk)
-```
-*Java*
-```java
-EncryptionCompat encryption = new EncryptionCompat(context, minSdk);
-```
-
-A version with [RxJava 2.x](https://github.com/ReactiveX/RxJava) bindings is also available.
-
-*Kotlin*
-```kotlin
-val encryption = RxEncryptionCompat(context, minSdk)
-```
-*Java*
-```java
-RxEncryptionCompat encryption = new RxEncryptionCompat(context, minSdk);
-```
-
-#### Message handling
-
-EncryptionCompat runs on an independent single thread to ensure sequential key access. You can retrieve output by providing a callback, handling the suspending function, or observing the [RxJava Single](http://reactivex.io/documentation/single.html). Please note that 4.x.x and 3.x.x are not backwards compatible and cannot read previously encrypted messages.
-
-## Gradle
-
-#### Adding dependency
-
-Add the maven repository to the project `build.gradle`:
-```gradle
-allprojects {
-    repositories {
-        maven { url 'https://jitpack.io' }
-    }
-}
-```
-
-Add the dependency to the module `build.gradle`:
-```gradle
-// If using callbacks or coroutines
+Add one of the following to your dependencies ([requires JitPack](https://jitpack.io/#com.github.eric-dk/EncryptionCompat/howto)) 
+```groovy
 implementation 'com.github.eric-dk.EncryptionCompat:core:4.0.0'
-// If using RxJava only
+// Or with RxJava extensions
 implementation 'com.github.eric-dk.EncryptionCompat:rx:4.0.0'
 ```
 
-## FAQ
+A very minimal example
+```kotlin
+val encryption = EncryptionCompat(context, minSdk)
+CoroutineScope(Dispatchers.IO).launch {
+    val ciphertext = encryption.encrypt("foo")
+    val plaintext = encryption.decrypt(ciphertext)
+}
+```
 
-#### Is integrity protection provided?
-No. EncryptionCompat provides confidentiality only. Performing integrity checks downstream is recommended.
+## Modes
 
-#### Are random values securely generated?
-Probably. Randomization may have weak entropy depending on [manufacturer](https://android-developers.googleblog.com/2013/08/some-securerandom-thoughts.html). The initialization vector may also be [zero-filled](https://stackoverflow.com/a/31037133).
+Preferred key mode depends on platform version and successful key generation - may fallback to a legacy mode. Preferred cipher mode solely depends on platform version. Legacy key and cipher modes depend on `minSdk`; for compatibility purposes, you may specify `0` to load all legacy modes. Each message contains the key and cipher mode used in encryption, thus preserving backwards-compatibility for decryption.
 
-#### Will upgrading Android invalidate data?
-No. Decryption will retain previous keys; subsequent messages may be encrypted with new, more secure keys.
+### Key Modes
 
-#### Can keys be irreversibly lost?
-Yes. The Android Keystore reliability depends on device; manufacturer [implementations may](https://doridori.github.io/android-security-the-forgetful-keystore/) [have bugs](https://alexbakker.me/post/mysterious-google-titan-m-bug-cve-2019-9465.html). Robust error handling is recommended.
+* **Below API level 18**: Per-message AES key created from global password in [Shared Preferences](https://developer.android.com/training/data-storage/shared-preferences)
+* **API level 18 - 23**: Per-instance AES key wrapped with global RSA key in [Android Keystore](https://developer.android.com/training/articles/keystore.html)
+* **API level 23+**: Global AES key in Android Keystore
+* **API level 28+**: Global AES key in [StrongBox Keymaster](https://developer.android.com/training/articles/keystore#HardwareSecurityModule); only [some devices](https://github.com/GrapheneOS/AttestationSamples)
+
+### Cipher Modes
+
+* **Below API level 21**: AES128-CBC with [Encrypt-then-Mac](https://en.wikipedia.org/wiki/Authenticated_encryption#Encrypt-then-MAC_(EtM))
+* **API level 21+**: AES128-GCM
+
+## Considerations
+
+### Entropy
+Randomization is provided by the manufacturer directly through [SecureRandom](https://developer.android.com/reference/java/security/SecureRandom) and indirectly through [Cipher](https://developer.android.com/reference/javax/crypto/Cipher). There have been real-world examples with [weak](https://android-developers.googleblog.com/2013/08/some-securerandom-thoughts.html) or simply [zero-filled](https://stackoverflow.com/a/31037133) values in the past. More modern devices should not exhibit any of these issues.
+
+### Reliability
+My experience with the keystore has varied by model, including from the same manufacturer. For example: a company-which-will-remain-unnamed's Nougat device refuses to save anything into keystore, whereas their Lollipop one has no problems. Hence why the key mode must be able to fallback. Changing the screen lock may also [invalidate](https://doridori.github.io/android-security-the-forgetful-keystore/) the keystore despite disabling user authentication. Even Google has had a [firmware bug](https://alexbakker.me/post/mysterious-google-titan-m-bug-cve-2019-9465.html) in their StrongBox Keymaster implementation on Pixel devices.
 
 ## Changelog
 
 * **4.0.0**
-    * Condenses ciphertext
+    * Adds authenticated AES support
 * **3.0.0**
     * Supports coroutines and RxJava
 * **2.0.2**
@@ -102,10 +73,13 @@ Yes. The Android Keystore reliability depends on device; manufacturer [implement
 * **1.0.0**
     * Initial release
 
-## References
+## Further Reading
 
-Credit goes to Yakiv Mospan for an excellent [series of articles](https://proandroiddev.com/secure-data-in-android-encryption-7eda33e68f58) on using the Android Keystore.  
-Credit goes to Nikolay Elenkov for a [great post](https://nelenkov.blogspot.com/2012/04/using-password-based-encryption-on.html) regarding password-based encryption on Android.
+[Security Best Practices: Symmetric Encryption with AES in Java and Android](https://proandroiddev.com/security-best-practices-symmetric-encryption-with-aes-in-java-7616beaaade9) by Patrick Favre-Bulle
+
+[Secure data in Android — Encryption](https://proandroiddev.com/secure-data-in-android-encryption-7eda33e68f58) by Yakiv Mospan
+
+[Using Password-based Encryption on Android](https://nelenkov.blogspot.com/2012/04/using-password-based-encryption-on.html) by Nikolay Elenkov
 
 ## License
 

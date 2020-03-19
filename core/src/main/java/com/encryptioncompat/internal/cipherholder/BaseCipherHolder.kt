@@ -30,17 +30,19 @@ internal class BaseCipherHolder : CipherHolder {
     private val cipher by lazy { Cipher.getInstance("AES/CBC/PKCS5Padding") }
     private val hmac by lazy { Mac.getInstance("HmacSHA256") }
 
-    override fun encrypt(key: Key, input: ByteArray, aad: ByteArray): ByteArray {
+    override fun encrypt(key: Key, plaintext: ByteArray, aad: ByteArray): ByteArray {
         cipher.init(Cipher.ENCRYPT_MODE, key)
         hmac.init(key)
 
         // Must use cipher generated IV
         cipher.iv.use { iv ->
-            cipher.doFinal(input).use { text ->
+            cipher.doFinal(plaintext).use { text ->
                 hmac.update(iv)
                 hmac.update(text)
                 hmac.update(aad)
                 hmac.doFinal().use { mac ->
+                    // Serialize segments into cipher data:
+                    // [mac][iv][contents]
                     return ByteBuffer.allocate(mac.size + iv.size + text.size)
                         .put(mac)
                         .put(iv)
@@ -51,17 +53,19 @@ internal class BaseCipherHolder : CipherHolder {
         }
     }
 
-    override fun decrypt(key: Key, input: ByteBuffer, aad: ByteBuffer): ByteArray {
+    override fun decrypt(key: Key, ciphertext: ByteBuffer, aad: ByteBuffer): ByteArray {
         hmac.init(key)
 
         // HMAC-SHA256 produces 256 bit mac
         ByteArray(32).use { mac ->
-            input[mac]
+            ciphertext[mac]
             // CBC IV is AES block size
             ByteArray(16).use { iv ->
-                input[iv]
-                ByteArray(input.remaining()).use { text ->
-                    input[text]
+                ciphertext[iv]
+                ByteArray(ciphertext.remaining()).use { text ->
+                    // Deserialize cipher data into segments:
+                    // [mac][iv][contents]
+                    ciphertext[text]
                     hmac.update(iv)
                     hmac.update(text)
                     hmac.update(aad)

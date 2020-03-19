@@ -61,10 +61,10 @@ class CipherHolderTest {
         val cipher = BaseCipherHolder()
         val expected = "foo"
 
-        val encrypted = cipher.encrypt(key, expected.toByteArray(), aad)
-        val decrypted = cipher.decrypt(key, ByteBuffer.wrap(encrypted), ByteBuffer.wrap(aad))
+        val ciphertext = cipher.encrypt(key, expected.toByteArray(), aad)
+        val plaintext = cipher.decrypt(key, ByteBuffer.wrap(ciphertext), ByteBuffer.wrap(aad))
 
-        val result = String(decrypted)
+        val result = String(plaintext)
         assertThat(result).isEqualTo(expected)
     }
 
@@ -91,10 +91,10 @@ class CipherHolderTest {
         val cipher = LollipopCipherHolder()
         val expected = "foo"
 
-        val encrypted = cipher.encrypt(key, expected.toByteArray(), aad)
-        val decrypted = cipher.decrypt(key, ByteBuffer.wrap(encrypted), ByteBuffer.wrap(aad))
+        val ciphertext = cipher.encrypt(key, expected.toByteArray(), aad)
+        val plaintext = cipher.decrypt(key, ByteBuffer.wrap(ciphertext), ByteBuffer.wrap(aad))
 
-        val result = String(decrypted)
+        val result = String(plaintext)
         assertThat(result).isEqualTo(expected)
     }
 }

@@ -61,11 +61,11 @@ class EncryptionTest {
 
     @Test
     fun base_flags_set() {
-        val encrypted = runBlocking {
+        val ciphertext = runBlocking {
             Encryption(context, BASE until JELLY_BEAN_MR2).encrypt("foo")
         }
 
-        val result = ByteBuffer.wrap(encrypted.decodeBase64())
+        val result = ByteBuffer.wrap(ciphertext.decodeBase64())
         assertThat(result[0]).isEqualTo(BASE)
         assertThat(result[1]).isEqualTo(BASE)
     }
@@ -84,11 +84,11 @@ class EncryptionTest {
     @SdkSuppress(minSdkVersion = JELLY_BEAN_MR2)
     @Test
     fun jelly_bean_flags_set() {
-        val encrypted = runBlocking {
+        val ciphertext = runBlocking {
             Encryption(context, JELLY_BEAN_MR2 until LOLLIPOP).encrypt("foo")
         }
 
-        val result = ByteBuffer.wrap(encrypted.decodeBase64())
+        val result = ByteBuffer.wrap(ciphertext.decodeBase64())
         assertThat(result[0]).isEqualTo(JELLY_BEAN_MR2)
         assertThat(result[1]).isEqualTo(BASE)
     }
@@ -108,11 +108,11 @@ class EncryptionTest {
     @SdkSuppress(minSdkVersion = LOLLIPOP)
     @Test
     fun lollipop_flags_set() {
-        val encrypted = runBlocking {
+        val ciphertext = runBlocking {
             Encryption(context, JELLY_BEAN_MR2 until M).encrypt("foo")
         }
 
-        val result = ByteBuffer.wrap(encrypted.decodeBase64())
+        val result = ByteBuffer.wrap(ciphertext.decodeBase64())
         assertThat(result[0]).isEqualTo(JELLY_BEAN_MR2)
         assertThat(result[1]).isEqualTo(LOLLIPOP)
     }
@@ -132,11 +132,11 @@ class EncryptionTest {
     @SdkSuppress(minSdkVersion = M)
     @Test
     fun marshmallow_flags_set() {
-        val encrypted = runBlocking {
+        val ciphertext = runBlocking {
             Encryption(context, M until P).encrypt("foo")
         }
 
-        val result = ByteBuffer.wrap(encrypted.decodeBase64())
+        val result = ByteBuffer.wrap(ciphertext.decodeBase64())
         assertThat(result[0]).isEqualTo(M)
         assertThat(result[1]).isEqualTo(LOLLIPOP)
     }
@@ -157,11 +157,11 @@ class EncryptionTest {
     @Test
     fun pie_flag_set() {
         assumeTrue(context.hasStrongBox())
-        val encrypted = runBlocking {
+        val ciphertext = runBlocking {
             Encryption(context, P..SDK_INT).encrypt("foo")
         }
 
-        val result = ByteBuffer.wrap(encrypted.decodeBase64())
+        val result = ByteBuffer.wrap(ciphertext.decodeBase64())
         assertThat(result[0]).isEqualTo(P)
         assertThat(result[1]).isEqualTo(LOLLIPOP)
     }
@@ -180,13 +180,13 @@ class EncryptionTest {
 
     @Test(expected = IllegalStateException::class)
     fun unsupported_flags_throw() {
-        val encrypted = ByteBuffer.allocate(16)
+        val ciphertext = ByteBuffer.allocate(16)
             .put(P.toByte())
             .put(LOLLIPOP.toByte())
             .array()
             .encodeBase64()
         runBlocking {
-            Encryption(context, BASE until JELLY_BEAN_MR2).decrypt(encrypted)
+            Encryption(context, BASE until JELLY_BEAN_MR2).decrypt(ciphertext)
         }
     }
 }

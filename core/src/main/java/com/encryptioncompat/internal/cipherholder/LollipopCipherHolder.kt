@@ -29,13 +29,15 @@ import javax.crypto.spec.GCMParameterSpec
 internal class LollipopCipherHolder : CipherHolder {
     private val cipher by lazy { Cipher.getInstance("AES/GCM/NoPadding") }
 
-    override fun encrypt(key: Key, input: ByteArray, aad: ByteArray): ByteArray {
+    override fun encrypt(key: Key, plaintext: ByteArray, aad: ByteArray): ByteArray {
         cipher.init(Cipher.ENCRYPT_MODE, key)
         cipher.updateAAD(aad)
 
         // Must use cipher generated IV
         cipher.iv.use { iv ->
-            cipher.doFinal(input).use { text ->
+            cipher.doFinal(plaintext).use { text ->
+                // Serialize segments into cipher data:
+                // [iv length][contents]
                 return ByteBuffer.allocate(1 + iv.size + text.size)
                     .put(iv.size.toByte())
                     .put(iv)
@@ -45,15 +47,17 @@ internal class LollipopCipherHolder : CipherHolder {
         }
     }
 
-    override fun decrypt(key: Key, input: ByteBuffer, aad: ByteBuffer): ByteArray {
-        val ivSize = input[0].toInt()
-        ivSize in 12 until 16 || throw IllegalStateException("Cannot authenticate")
+    override fun decrypt(key: Key, ciphertext: ByteBuffer, aad: ByteBuffer): ByteArray {
+        val ivSize = ciphertext.get().toInt()
+        ivSize in 12..16 || throw IllegalStateException("Cannot authenticate")
 
         // GCM IV is 12-16 bytes
         ByteArray(ivSize).use { iv ->
-            input[iv]
-            ByteArray(input.remaining()).use { text ->
-                input[text]
+            ciphertext[iv]
+            ByteArray(ciphertext.remaining()).use { text ->
+                // Deserialize cipher data into segments
+                // [iv length][contents]
+                ciphertext[text]
                 cipher.init(Cipher.DECRYPT_MODE, key, GCMParameterSpec(128, iv))
                 cipher.updateAAD(aad)
                 return cipher.doFinal(text)

@@ -24,21 +24,16 @@ import com.encryptioncompat.internal.Encryption
 import kotlinx.coroutines.*
 
 /**
- * Encrypts with AES256/CBC/PKCS7 key, but the key management scheme depends on
- * device support:
- * <p><ul>
- * <li>Least secure (below API 18): Per-message key is created from random salt and global password
- * - stored in shared preferences
- * <li>More secure (API 18-22): Per-instance key is wrapped with global asymmetric key - saved in
- * Android Keystore
- * <li>Most secure (API 23+): Global key is managed by Android Keystore
- * <li>Most secure (API 28+): Same as above, but key is stored in hardware security module
- * </ul></p>
- * Due to manufacturer fragmentation, EncryptionCompat will attempt the highest possible scheme then
- * fall through until reaching the specified minimum platform.
+ * Preferred key mode depends on platform version and successful
+ * key generation - may fallback to a legacy mode. Preferred cipher
+ * mode solely depends on platform version. Legacy key and cipher
+ * modes depend on `minSdk`; for compatibility purposes, you may
+ * specify `0` to load all legacy modes. Each message contains the
+ * key and cipher mode used in encryption, thus preserving
+ * backwards-compatibility for decryption.
  *
  * @param context           Will get application context
- * @param minSdk            Minimum supported platform
+ * @param minSdk            Minimum API level
  */
 class EncryptionCompat(context: Context, minSdk: Int) {
     interface Callback {
@@ -50,59 +45,59 @@ class EncryptionCompat(context: Context, minSdk: Int) {
 
     //region Encrypt
     /**
-     * Encrypts {@code input}. Key management depends on device support.
-     * Can be called from any thread; encryption is run on independent thread, callback on main.
+     * Encrypts {@code input}. Can be called from any context;
+     * encryption is run on independent thread.
      *
-     * @param input         String to encrypt
-     * @param callback      Callback on execution
-     * @since 3.0.0
-     */
-    @AnyThread
-    fun encrypt(callback: Callback, input: String) {
-        val handler = CoroutineExceptionHandler { _, throwable -> callback.onFailure(throwable) }
-        CoroutineScope(Dispatchers.Main + SupervisorJob()).launch(handler) {
-            callback.onSuccess(encrypt(input))
-        }
-    }
-
-    /**
-     * Encrypts {@code input}. Key management depends on device support.
-     * Can be called from any thread; encryption is run on independent thread.
-     *
-     * @param input         String to encrypt
-     * @return              Encrypted string
+     * @param plaintext     Plaintext
+     * @return              Ciphertext
      * @since 3.0.0
      */
     @CheckResult
-    suspend fun encrypt(input: String) = encryption.encrypt(input)
+    suspend fun encrypt(plaintext: String) = encryption.encrypt(plaintext)
+
+    /**
+     * Encrypts {@code input}. Can be called from any context;
+     * encryption is run on independent thread, callback on main.
+     *
+     * @param plaintext     Plaintext
+     * @param callback      Ciphertext
+     * @since 3.0.0
+     */
+    @AnyThread
+    fun encrypt(callback: Callback, plaintext: String) {
+        val handler = CoroutineExceptionHandler { _, throwable -> callback.onFailure(throwable) }
+        CoroutineScope(Dispatchers.Main + SupervisorJob()).launch(handler) {
+            callback.onSuccess(encrypt(plaintext))
+        }
+    }
     //endregion
 
     //region Decrypt
     /**
-     * Decrypts {@code input}. Will throw exception if encoded mode unsupported or key unavailable.
-     * Can be called from any thread; encryption is run on independent thread, callback on main.
-     *
-     * @param input         String to decrypt
-     * @param callback      Callback on execution
-     * @since 3.0.0
-     */
-    @AnyThread
-    fun decrypt(callback: Callback, input: String) {
-        val handler = CoroutineExceptionHandler { _, throwable -> callback.onFailure(throwable) }
-        CoroutineScope(Dispatchers.Main + SupervisorJob()).launch(handler) {
-            callback.onSuccess(decrypt(input))
-        }
-    }
-
-    /**
      * Decrypts {@code input}. Will throw exception if mode unsupported or key unavailable.
      * Can be called from any thread; encryption is run on independent thread.
      *
-     * @param input         String to decrypt
-     * @return              Decrypted string
+     * @param ciphertext    Ciphertext
+     * @return              Plaintext
      * @since 3.0.0
      */
     @CheckResult
-    suspend fun decrypt(input: String) = encryption.decrypt(input)
+    suspend fun decrypt(ciphertext: String) = encryption.decrypt(ciphertext)
+
+    /**
+     * Decrypts {@code input}. Will throw exception if encoded mode unsupported or key unavailable.
+     * Can be called from any thread; encryption is run on independent thread, callback on main.
+     *
+     * @param ciphertext    Ciphertext
+     * @param callback      Plaintext
+     * @since 3.0.0
+     */
+    @AnyThread
+    fun decrypt(callback: Callback, ciphertext: String) {
+        val handler = CoroutineExceptionHandler { _, throwable -> callback.onFailure(throwable) }
+        CoroutineScope(Dispatchers.Main + SupervisorJob()).launch(handler) {
+            callback.onSuccess(decrypt(ciphertext))
+        }
+    }
     //endregion
 }

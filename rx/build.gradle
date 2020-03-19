@@ -17,7 +17,7 @@ android {
 
 dependencies {
     // EncryptionCompat
-    implementation project(':core')
+    api project(':core')
 
     // Kotlin
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${versions.kotlin}"

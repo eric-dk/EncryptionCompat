@@ -78,7 +78,7 @@ class KeyHolderTest {
     @Test
     fun marshmallow_encrypt_key_has_null_metadata() {
         val result = MarshmallowKeyHolder(context).getEncryptBundle().supplement
-        assertThat(result).isNull()
+        assertThat(result).isEmpty()
     }
 
     @SdkSuppress(minSdkVersion = P)
@@ -93,6 +93,6 @@ class KeyHolderTest {
     fun pie_encrypt_key_has_null_metadata() {
         assumeTrue(context.hasStrongBox())
         val result = PieKeyHolder(context).getEncryptBundle().supplement
-        assertThat(result).isNull()
+        assertThat(result).isEmpty()
     }
 }

@@ -22,21 +22,16 @@ import com.encryptioncompat.EncryptionCompat
 import kotlinx.coroutines.rx2.rxSingle
 
 /**
- * Encrypts with AES/CBC/PKCS7 key, but the key management scheme depends on
- * device support:
- * <p><ul>
- * <li>Least secure (below API 18): Per-message key is created from random salt and global password
- * - stored in shared preferences
- * <li>More secure (API 18-22): Per-instance key is wrapped with global asymmetric key - saved in
- * Android Keystore
- * <li>Most secure (API 23+): Global key is managed by Android Keystore
- * <li>Most secure (API 28+): Same as above, but key is stored in hardware security module
- * </ul></p>
- * Due to manufacturer fragmentation, EncryptionCompat will attempt the highest possible scheme then
- * fall through until reaching the specified minimum platform.
+ * Preferred key mode depends on platform version and successful
+ * key generation - may fallback to a legacy mode. Preferred cipher
+ * mode solely depends on platform version. Legacy key and cipher
+ * modes depend on `minSdk`; for compatibility purposes, you may
+ * specify `0` to load all legacy modes. Each message contains the
+ * key and cipher mode used in encryption, thus preserving
+ * backwards-compatibility for decryption.
  *
- * @param context           Will get application context
- * @param minSdk            Minimum supported platform
+ * @param context           Context
+ * @param minSdk            Minimum API level
  */
 class RxEncryptionCompat(context: Context, minSdk: Int) {
     private val encryption = EncryptionCompat(context, minSdk)
@@ -44,18 +39,18 @@ class RxEncryptionCompat(context: Context, minSdk: Int) {
     /**
      * Encrypts {@code input}. Key management depends on device support.
      *
-     * @param input         String to encrypt
-     * @return              Single with encrypted string
+     * @param plaintext     Plaintext
+     * @return              Single with ciphertext
      * @since 3.0.0
      */
-    fun encrypt(input: String) = rxSingle { encryption.encrypt(input) }
+    fun encrypt(plaintext: String) = rxSingle { encryption.encrypt(plaintext) }
 
     /**
      * Decrypts {@code input}. Will pass error if mode unsupported or key unavailable.
      *
-     * @param input         String to decrypt
-     * @return              Single with decrypted string
+     * @param ciphertext    Ciphertext
+     * @return              Single with plaintext
      * @since 3.0.0
      */
-    fun decrypt(input: String) = rxSingle { encryption.decrypt(input) }
+    fun decrypt(ciphertext: String) = rxSingle { encryption.decrypt(ciphertext) }
 }
