@@ -29,38 +29,36 @@ import javax.crypto.spec.GCMParameterSpec
 internal class LollipopCipherHolder : CipherHolder {
     private val cipher by lazy { Cipher.getInstance("AES/GCM/NoPadding") }
 
-    override fun encrypt(key: Key, plaintext: ByteArray, aad: ByteArray): ByteArray {
+    override fun encrypt(key: Key, plaintext: ByteArray): ByteArray {
         cipher.init(Cipher.ENCRYPT_MODE, key)
-        cipher.updateAAD(aad)
 
         // Must use cipher generated IV
         cipher.iv.use { iv ->
-            cipher.doFinal(plaintext).use { text ->
-                // Serialize segments into cipher data:
-                // [iv length][contents]
-                return ByteBuffer.allocate(1 + iv.size + text.size)
+            cipher.doFinal(plaintext).use { data ->
+                // Serialize segments into ciphertext:
+                // [iv length][iv][data]
+                return ByteBuffer.allocate(1 + iv.size + data.size)
                     .put(iv.size.toByte())
                     .put(iv)
-                    .put(text)
+                    .put(data)
                     .array()
             }
         }
     }
 
-    override fun decrypt(key: Key, ciphertext: ByteBuffer, aad: ByteBuffer): ByteArray {
+    override fun decrypt(key: Key, ciphertext: ByteBuffer): ByteArray {
         val ivSize = ciphertext.get().toInt()
         ivSize in 12..16 || throw IllegalStateException("Cannot authenticate")
 
         // GCM IV is 12-16 bytes
         ByteArray(ivSize).use { iv ->
             ciphertext[iv]
-            ByteArray(ciphertext.remaining()).use { text ->
-                // Deserialize cipher data into segments
-                // [iv length][contents]
-                ciphertext[text]
+            ByteArray(ciphertext.remaining()).use { data ->
+                // Deserialize ciphertext into segments
+                // [iv length][iv][data]
+                ciphertext[data]
                 cipher.init(Cipher.DECRYPT_MODE, key, GCMParameterSpec(128, iv))
-                cipher.updateAAD(aad)
-                return cipher.doFinal(text)
+                return cipher.doFinal(data)
             }
         }
     }

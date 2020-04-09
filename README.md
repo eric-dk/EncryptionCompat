@@ -25,8 +25,8 @@ A very minimal example
 ```kotlin
 val encryption = EncryptionCompat(context, minSdk)
 CoroutineScope(Dispatchers.IO).launch {
-    val ciphertext = encryption.encrypt("foo")
-    val plaintext = encryption.decrypt(ciphertext)
+    val encrypted = encryption.encrypt("foo")
+    val decrypted = encryption.decrypt(encrypted)
 }
 ```
 

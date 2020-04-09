@@ -45,58 +45,58 @@ class EncryptionCompat(context: Context, minSdk: Int) {
 
     //region Encrypt
     /**
-     * Encrypts {@code input}. Can be called from any context;
+     * Encrypts {@code message}. Can be called from any context;
      * encryption is run on independent thread.
      *
-     * @param plaintext     Plaintext
-     * @return              Ciphertext
+     * @param message       Message to encrypt
+     * @return              Encrypted message
      * @since 3.0.0
      */
     @CheckResult
-    suspend fun encrypt(plaintext: String) = encryption.encrypt(plaintext)
+    suspend fun encrypt(message: String) = encryption.encrypt(message)
 
     /**
-     * Encrypts {@code input}. Can be called from any context;
+     * Encrypts {@code message}. Can be called from any context;
      * encryption is run on independent thread, callback on main.
      *
-     * @param plaintext     Plaintext
-     * @param callback      Ciphertext
+     * @param message       Message to encrypt
+     * @param callback      Callback with encrypted message
      * @since 3.0.0
      */
     @AnyThread
-    fun encrypt(callback: Callback, plaintext: String) {
+    fun encrypt(callback: Callback, message: String) {
         val handler = CoroutineExceptionHandler { _, throwable -> callback.onFailure(throwable) }
         CoroutineScope(Dispatchers.Main + SupervisorJob()).launch(handler) {
-            callback.onSuccess(encrypt(plaintext))
+            callback.onSuccess(encrypt(message))
         }
     }
     //endregion
 
     //region Decrypt
     /**
-     * Decrypts {@code input}. Will throw exception if mode unsupported or key unavailable.
+     * Decrypts {@code message}. Will throw exception if mode unsupported or key unavailable.
      * Can be called from any thread; encryption is run on independent thread.
      *
-     * @param ciphertext    Ciphertext
-     * @return              Plaintext
+     * @param message       Message to decrypt
+     * @return              Decrypted message
      * @since 3.0.0
      */
     @CheckResult
-    suspend fun decrypt(ciphertext: String) = encryption.decrypt(ciphertext)
+    suspend fun decrypt(message: String) = encryption.decrypt(message)
 
     /**
-     * Decrypts {@code input}. Will throw exception if encoded mode unsupported or key unavailable.
+     * Decrypts {@code message}. Will throw exception if encoded mode unsupported or key unavailable.
      * Can be called from any thread; encryption is run on independent thread, callback on main.
      *
-     * @param ciphertext    Ciphertext
-     * @param callback      Plaintext
+     * @param message       Message to decrypt
+     * @param callback      Callback with decrypted message
      * @since 3.0.0
      */
     @AnyThread
-    fun decrypt(callback: Callback, ciphertext: String) {
+    fun decrypt(callback: Callback, message: String) {
         val handler = CoroutineExceptionHandler { _, throwable -> callback.onFailure(throwable) }
         CoroutineScope(Dispatchers.Main + SupervisorJob()).launch(handler) {
-            callback.onSuccess(decrypt(ciphertext))
+            callback.onSuccess(decrypt(message))
         }
     }
     //endregion

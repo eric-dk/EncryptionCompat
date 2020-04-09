@@ -30,30 +30,29 @@ internal class BaseCipherHolder : CipherHolder {
     private val cipher by lazy { Cipher.getInstance("AES/CBC/PKCS5Padding") }
     private val hmac by lazy { Mac.getInstance("HmacSHA256") }
 
-    override fun encrypt(key: Key, plaintext: ByteArray, aad: ByteArray): ByteArray {
+    override fun encrypt(key: Key, plaintext: ByteArray): ByteArray {
         cipher.init(Cipher.ENCRYPT_MODE, key)
         hmac.init(key)
 
         // Must use cipher generated IV
         cipher.iv.use { iv ->
-            cipher.doFinal(plaintext).use { text ->
+            cipher.doFinal(plaintext).use { data ->
                 hmac.update(iv)
-                hmac.update(text)
-                hmac.update(aad)
+                hmac.update(data)
                 hmac.doFinal().use { mac ->
-                    // Serialize segments into cipher data:
-                    // [mac][iv][contents]
-                    return ByteBuffer.allocate(mac.size + iv.size + text.size)
+                    // Serialize segments into ciphertext:
+                    // [mac][iv][data]
+                    return ByteBuffer.allocate(mac.size + iv.size + data.size)
                         .put(mac)
                         .put(iv)
-                        .put(text)
+                        .put(data)
                         .array()
                 }
             }
         }
     }
 
-    override fun decrypt(key: Key, ciphertext: ByteBuffer, aad: ByteBuffer): ByteArray {
+    override fun decrypt(key: Key, ciphertext: ByteBuffer): ByteArray {
         hmac.init(key)
 
         // HMAC-SHA256 produces 256 bit mac
@@ -62,20 +61,19 @@ internal class BaseCipherHolder : CipherHolder {
             // CBC IV is AES block size
             ByteArray(16).use { iv ->
                 ciphertext[iv]
-                ByteArray(ciphertext.remaining()).use { text ->
-                    // Deserialize cipher data into segments:
-                    // [mac][iv][contents]
-                    ciphertext[text]
+                ByteArray(ciphertext.remaining()).use { data ->
+                    // Deserialize ciphertext into segments:
+                    // [mac][iv][data]
+                    ciphertext[data]
                     hmac.update(iv)
-                    hmac.update(text)
-                    hmac.update(aad)
+                    hmac.update(data)
 
                     if (!MessageDigest.isEqual(mac, hmac.doFinal())) {
                         throw IllegalStateException("Cannot authenticate")
                     }
 
                     cipher.init(Cipher.DECRYPT_MODE, key, IvParameterSpec(iv))
-                    return cipher.doFinal(text)
+                    return cipher.doFinal(data)
                 }
             }
         }

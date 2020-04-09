@@ -23,8 +23,8 @@ import java.security.Key
  * AES cipher implementation.
  */
 internal interface CipherHolder {
-    fun encrypt(key: Key, plaintext: ByteArray, aad: ByteArray): ByteArray
+    fun encrypt(key: Key, plaintext: ByteArray): ByteArray
 
     // Using byte buffers to reduce copy operations
-    fun decrypt(key: Key, ciphertext: ByteBuffer, aad: ByteBuffer): ByteArray
+    fun decrypt(key: Key, ciphertext: ByteBuffer): ByteArray
 }

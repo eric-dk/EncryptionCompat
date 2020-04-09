@@ -48,21 +48,12 @@ class CipherHolderTest {
     }
 
     @Test
-    fun base_aad_unmodified() {
-        val expected = byteArrayOf(1, 2)
-        val result = expected.copyOf()
-        BaseCipherHolder().encrypt(key, ByteArray(3), result)
-        assertThat(result).isEqualTo(expected)
-    }
-
-    @Test
     fun base_encrypt_decrypt_matches() {
-        val aad = byteArrayOf(1, 2)
         val cipher = BaseCipherHolder()
         val expected = "foo"
 
-        val ciphertext = cipher.encrypt(key, expected.toByteArray(), aad)
-        val plaintext = cipher.decrypt(key, ByteBuffer.wrap(ciphertext), ByteBuffer.wrap(aad))
+        val ciphertext = cipher.encrypt(key, expected.toByteArray())
+        val plaintext = cipher.decrypt(key, ByteBuffer.wrap(ciphertext))
 
         val result = String(plaintext)
         assertThat(result).isEqualTo(expected)
@@ -77,22 +68,12 @@ class CipherHolderTest {
 
     @SdkSuppress(minSdkVersion = LOLLIPOP)
     @Test
-    fun lollipop_aad_unmodified() {
-        val expected = byteArrayOf(1, 2)
-        val result = expected.copyOf()
-        LollipopCipherHolder().encrypt(key, ByteArray(3), result)
-        assertThat(result).isEqualTo(expected)
-    }
-
-    @SdkSuppress(minSdkVersion = LOLLIPOP)
-    @Test
     fun lollipop_encrypt_decrypt_matches() {
-        val aad = byteArrayOf(1, 2)
         val cipher = LollipopCipherHolder()
         val expected = "foo"
 
-        val ciphertext = cipher.encrypt(key, expected.toByteArray(), aad)
-        val plaintext = cipher.decrypt(key, ByteBuffer.wrap(ciphertext), ByteBuffer.wrap(aad))
+        val ciphertext = cipher.encrypt(key, expected.toByteArray())
+        val plaintext = cipher.decrypt(key, ByteBuffer.wrap(ciphertext))
 
         val result = String(plaintext)
         assertThat(result).isEqualTo(expected)

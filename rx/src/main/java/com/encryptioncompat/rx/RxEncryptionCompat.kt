@@ -37,20 +37,20 @@ class RxEncryptionCompat(context: Context, minSdk: Int) {
     private val encryption = EncryptionCompat(context, minSdk)
 
     /**
-     * Encrypts {@code input}. Key management depends on device support.
+     * Encrypts {@code message}. Key management depends on device support.
      *
-     * @param plaintext     Plaintext
-     * @return              Single with ciphertext
+     * @param message       Message to encrypt
+     * @return              Single with encrypted message
      * @since 3.0.0
      */
-    fun encrypt(plaintext: String) = rxSingle { encryption.encrypt(plaintext) }
+    fun encrypt(message: String) = rxSingle { encryption.encrypt(message) }
 
     /**
      * Decrypts {@code input}. Will pass error if mode unsupported or key unavailable.
      *
-     * @param ciphertext    Ciphertext
-     * @return              Single with plaintext
+     * @param message       Message to decrypt
+     * @return              Single with decrypted message
      * @since 3.0.0
      */
-    fun decrypt(ciphertext: String) = rxSingle { encryption.decrypt(ciphertext) }
+    fun decrypt(message: String) = rxSingle { encryption.decrypt(message) }
 }

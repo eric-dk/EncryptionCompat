@@ -58,33 +58,34 @@ internal class Encryption(context: Context, sdkRange: IntRange) {
     }
 
     //region Encrypt
-    suspend fun encrypt(input: String): String {
-        input.isNotEmpty() || return input
+    suspend fun encrypt(message: String): String {
+        message.isNotEmpty() || return message
 
         return withContext(FIFO) {
-            for (mode in modeToKeyHolders.reverseKeyIterator()) {
-                // Attempt to generate and store key, preemptively removing key modes that fail.
-                val bundle = try {
-                    modeToKeyHolders[mode].getEncryptBundle()
+            // Always select highest cipher mode for encryption.
+            val cipherMode = modeToCipherHolders.lastKey
+
+            // Attempt to generate and store key, removing key modes that fail.
+            for (keyMode in modeToKeyHolders.reverseKeyIterator()) {
+                val modes = byteArrayOf(keyMode.toByte(), cipherMode.toByte())
+                try {
+                    val bundle = modeToKeyHolders[keyMode].getEncryptBundle()
+                    return@withContext assemble(modes, bundle, message.toByteArray())
                 } catch (exception: Exception) {
-                    modeToKeyHolders.delete(mode)
+                    modeToKeyHolders.delete(keyMode)
                     continue
                 }
-
-                // Always select highest cipher mode for encryption.
-                val modes = byteArrayOf(mode.toByte(), modeToCipherHolders.lastKey.toByte())
-                return@withContext assemble(modes, bundle, input.toByteArray())
             }
             throw IllegalStateException("Cannot generate key")
         }
     }
 
-    private fun assemble(modes: ByteArray, bundle: KeyBundle, input: ByteArray): String {
+    private fun assemble(modes: ByteArray, bundle: KeyBundle, message: ByteArray): String {
         val cipherHolder = modeToCipherHolders[modes[1].toInt()]
-        return cipherHolder.encrypt(bundle.key, input, modes).use { ciphertext ->
+        return cipherHolder.encrypt(bundle.key, message).use { ciphertext ->
 
             // Serialize segments into message:
-            // [key mode][cipher mode][key supplement length][key supplement data][cipher data]
+            // [key mode][cipher mode][key supplement length][key supplement data][ciphertext]
             ByteBuffer.allocate(modes.size + 4 + bundle.supplement.size + ciphertext.size)
                 .put(modes)
                 .putInt(bundle.supplement.size)
@@ -97,14 +98,14 @@ internal class Encryption(context: Context, sdkRange: IntRange) {
     //endregion
 
     //region Decrypt
-    suspend fun decrypt(input: String): String {
-        input.isNotEmpty() || return input
+    suspend fun decrypt(message: String): String {
+        message.isNotEmpty() || return message
 
         return withContext(FIFO) {
-            val buffer = ByteBuffer.wrap(input.decodeBase64())
+            val buffer = ByteBuffer.wrap(message.decodeBase64())
 
             // Deserialize message into segments:
-            // [key mode][cipher mode][key supplement length][key supplement data][cipher data]
+            // [key mode][cipher mode][key supplement length][key supplement data][ciphertext]
             val modes = buffer.duplicate().apply { limit(2) }
             buffer.position(2)
             val supplement = ByteArray(buffer.int).apply { buffer[this] }
@@ -123,7 +124,7 @@ internal class Encryption(context: Context, sdkRange: IntRange) {
         cipherHolder ?: throw IllegalStateException("Cannot retrieve cipher")
 
         val key = keyHolder.getDecryptKey(supplement)
-        return String(cipherHolder.decrypt(key, data, modes))
+        return String(cipherHolder.decrypt(key, data))
     }
     //endregion
 }
