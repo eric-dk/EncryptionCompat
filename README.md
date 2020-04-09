@@ -56,6 +56,8 @@ My experience with the keystore has varied by model, including from the same man
 
 ## Changelog
 
+* **4.1.0**
+    * Improves device compatibility
 * **4.0.0**
     * Adds authenticated AES support
 * **3.0.0**
