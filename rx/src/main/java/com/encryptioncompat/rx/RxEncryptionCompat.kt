@@ -19,7 +19,7 @@ package com.encryptioncompat.rx
 
 import android.content.Context
 import com.encryptioncompat.EncryptionCompat
-import kotlinx.coroutines.rx2.rxSingle
+import kotlinx.coroutines.rx3.rxSingle
 
 /**
  * Preferred key mode depends on platform version and successful

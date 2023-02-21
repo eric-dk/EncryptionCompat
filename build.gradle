@@ -1,29 +1,29 @@
 buildscript {
     ext {
         versions = [
-            coroutines: '1.3.3',
-            kotlin: '1.3.71',
+            coroutines: '1.6.4',
+            kotlin: '1.8.0',
+            project: '4.2.0',
             sdk: [
                 minimum: 14,
-                target:  29
+                target:  33
             ]
         ]
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.6.2'
-        classpath 'com.github.dcendents:android-maven-gradle-plugin:2.1'
+        classpath 'com.android.tools.build:gradle:7.4.1'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${versions.kotlin}"
     }
     repositories {
         google()
-        jcenter()
+        mavenCentral()
     }
 }
 
 allprojects {
     repositories {
         google()
-        jcenter()
+        mavenCentral()
     }
 }
 

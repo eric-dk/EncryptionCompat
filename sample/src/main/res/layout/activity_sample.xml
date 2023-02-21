@@ -1,48 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:gravity="center_horizontal"
-    android:orientation="vertical"
-    tools:context=".SampleActivity">
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                                                   xmlns:app="http://schemas.android.com/apk/res-auto"
+                                                   xmlns:tools="http://schemas.android.com/tools"
+                                                   android:layout_width="match_parent"
+                                                   android:layout_height="match_parent"
+                                                   android:gravity="center_horizontal"
+                                                   android:orientation="vertical"
+                                                   tools:context=".SampleActivity">
 
-    <EditText
-        android:id="@+id/inputText"
-        android:background="@android:color/transparent"
-        android:hint="@string/input"
-        android:importantForAutofill="no"
-        android:inputType="textMultiLine"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toStartOf="@id/inputButton"
-        style="@style/AppText"/>
+    <EditText android:id="@+id/inputText"
+              android:background="@android:color/transparent"
+              android:hint="@string/input"
+              android:importantForAutofill="no"
+              android:inputType="textMultiLine"
+              app:layout_constraintTop_toTopOf="parent"
+              app:layout_constraintStart_toStartOf="parent"
+              app:layout_constraintEnd_toStartOf="@id/inputButton"
+              style="@style/AppText"/>
 
-    <Button
-        android:id="@+id/inputButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_margin="8dp"
-        android:text="@string/test"
-        app:layout_constraintTop_toTopOf="@id/inputText"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toBottomOf="@id/inputText"/>
+    <Button android:id="@+id/inputButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="8dp"
+            android:text="@string/test"
+            app:layout_constraintTop_toTopOf="@id/inputText"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBottom_toBottomOf="@id/inputText"/>
 
-    <TextView
-        android:id="@+id/cipherText"
-        android:hint="@string/cipher"
-        app:layout_constraintTop_toBottomOf="@id/inputText"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        style="@style/AppText"/>
+    <TextView android:id="@+id/cipherText"
+              android:hint="@string/cipher"
+              app:layout_constraintTop_toBottomOf="@id/inputText"
+              app:layout_constraintStart_toStartOf="parent"
+              app:layout_constraintEnd_toEndOf="parent"
+              style="@style/AppText"/>
 
-    <TextView
-        android:id="@+id/plainText"
-        android:hint="@string/plain"
-        app:layout_constraintTop_toBottomOf="@id/cipherText"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        style="@style/AppText"/>
+    <TextView android:id="@+id/plainText"
+              android:hint="@string/plain"
+              app:layout_constraintTop_toBottomOf="@id/cipherText"
+              app:layout_constraintStart_toStartOf="parent"
+              app:layout_constraintEnd_toEndOf="parent"
+              style="@style/AppText"/>
 </androidx.constraintlayout.widget.ConstraintLayout>

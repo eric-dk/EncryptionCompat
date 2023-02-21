@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020 Eric Nguyen
+ * Copyright © 2023 Eric Nguyen
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,34 +17,31 @@
 package com.encryptioncompat.sample;
 
 import android.os.Bundle;
-import android.widget.TextView;
-import com.google.android.material.snackbar.Snackbar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
+import com.encryptioncompat.sample.databinding.ActivitySampleBinding;
+import com.google.android.material.snackbar.Snackbar;
 
 public class SampleActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_sample);
-
-        TextView inputText = findViewById(R.id.inputText);
-        TextView cipherText = findViewById(R.id.cipherText);
-        TextView plainText = findViewById(R.id.plainText);
+        ActivitySampleBinding binding = ActivitySampleBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
 
         ViewModelProvider.Factory factory =
                 new ViewModelProvider.AndroidViewModelFactory(getApplication());
         SampleViewModel viewModel =
                 new ViewModelProvider(this, factory).get(SampleViewModel.class);
 
-        viewModel.getCipherText().observe(this, cipherText::setText);
-        viewModel.getPlainText().observe(this, plainText::setText);
+        viewModel.getCipherText().observe(this, binding.cipherText::setText);
+        viewModel.getPlainText().observe(this, binding.plainText::setText);
         viewModel.getErrorText().observe(this, text ->
-                Snackbar.make(inputText, text, Snackbar.LENGTH_LONG).show()
+                Snackbar.make(binding.inputText, text, Snackbar.LENGTH_LONG).show()
         );
 
         findViewById(R.id.inputButton).setOnClickListener(view ->
-                viewModel.setInputText(inputText.getText().toString())
+                viewModel.setInputText(binding.inputText.getText().toString())
         );
     }
 
