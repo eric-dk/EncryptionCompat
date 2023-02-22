@@ -14,11 +14,11 @@ String encryption on Android simplified. Intelligent key handling and automatic 
 
 ## Quick Start
 
-Add one of the following to your dependencies ([requires JitPack](https://jitpack.io/#com.github.eric-dk/EncryptionCompat/howto)) 
+Add one of the following to your dependencies ([requires JitPack](https://jitpack.io/#com.github.eric-dk/EncryptionCompat/howto))
 ```groovy
-implementation 'com.github.eric-dk.EncryptionCompat:core:4.0.0'
+implementation 'com.github.eric-dk.EncryptionCompat:core:4.2.0'
 // Or with RxJava extensions
-implementation 'com.github.eric-dk.EncryptionCompat:rx:4.0.0'
+implementation 'com.github.eric-dk.EncryptionCompat:rx:4.2.0'
 ```
 
 A very minimal example
@@ -56,6 +56,8 @@ My experience with the keystore has varied by model, including from the same man
 
 ## Changelog
 
+* **4.2.0**
+    * Updates dependencies and target SDK
 * **4.1.0**
     * Improves device compatibility
 * **4.0.0**
@@ -85,7 +87,7 @@ My experience with the keystore has varied by model, including from the same man
 
 ## License
 
-    Copyright © 2020 Eric Nguyen
+    Copyright © 2023 Eric Nguyen
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
