@@ -32,7 +32,7 @@ public class SampleActivity extends AppCompatActivity {
         ViewModelProvider.Factory factory =
                 new ViewModelProvider.AndroidViewModelFactory(getApplication());
         SampleViewModel viewModel =
-                new ViewModelProvider(this, factory).get(SampleViewModel.class);
+                new ViewModelProvider(getViewModelStore(), factory).get(SampleViewModel.class);
 
         viewModel.getCipherText().observe(this, binding.cipherText::setText);
         viewModel.getPlainText().observe(this, binding.plainText::setText);
@@ -43,10 +43,5 @@ public class SampleActivity extends AppCompatActivity {
         findViewById(R.id.inputButton).setOnClickListener(view ->
                 viewModel.setInputText(binding.inputText.getText().toString())
         );
-    }
-
-    @Override
-    public void onBackPressed() {
-        moveTaskToBack(false);
     }
 }

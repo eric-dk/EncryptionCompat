@@ -1,17 +1,17 @@
 buildscript {
     ext {
         versions = [
-            coroutines: '1.6.4',
-            kotlin: '1.8.0',
+            coroutines: '1.7.3',
+            kotlin: '1.9.22',
             project: '4.2.0',
             sdk: [
                 minimum: 14,
-                target:  33
+                target:  34
             ]
         ]
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:7.4.1'
+        classpath 'com.android.tools.build:gradle:8.2.1'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${versions.kotlin}"
     }
     repositories {
@@ -25,8 +25,4 @@ allprojects {
         google()
         mavenCentral()
     }
-}
-
-task clean(type: Delete) {
-    delete rootProject.buildDir
 }

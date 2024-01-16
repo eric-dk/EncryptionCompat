@@ -21,7 +21,11 @@ import android.os.Build
 import androidx.annotation.AnyThread
 import androidx.annotation.CheckResult
 import com.encryptioncompat.internal.Encryption
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 /**
  * Preferred key mode depends on platform version and successful
@@ -33,15 +37,20 @@ import kotlinx.coroutines.*
  * backwards-compatibility for decryption.
  *
  * @param context           Will get application context
- * @param minSdk            Minimum API level
+ * @param sdkRange          Target API levels
  */
-class EncryptionCompat(context: Context, minSdk: Int) {
+class EncryptionCompat(context: Context, sdkRange: IntRange) {
     interface Callback {
         fun onSuccess(output: String)
         fun onFailure(throwable: Throwable)
     }
 
-    private val encryption = Encryption(context.applicationContext, minSdk..Build.VERSION.SDK_INT)
+    @JvmOverloads
+    constructor(context:Context,
+                minSdk: Int,
+                maxSdk: Int = Build.VERSION.SDK_INT) : this(context, minSdk..maxSdk)
+
+    private val encryption = Encryption(context.applicationContext, sdkRange)
 
     //region Encrypt
     /**

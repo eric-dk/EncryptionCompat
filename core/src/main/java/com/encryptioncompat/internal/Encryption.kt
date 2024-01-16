@@ -17,7 +17,11 @@
 package com.encryptioncompat.internal
 
 import android.content.Context
-import android.os.Build.VERSION_CODES.*
+import android.os.Build.VERSION_CODES.BASE
+import android.os.Build.VERSION_CODES.JELLY_BEAN_MR2
+import android.os.Build.VERSION_CODES.LOLLIPOP
+import android.os.Build.VERSION_CODES.M
+import android.os.Build.VERSION_CODES.P
 import android.util.SparseArray
 import com.encryptioncompat.internal.cipherholder.BaseCipherHolder
 import com.encryptioncompat.internal.cipherholder.LollipopCipherHolder
@@ -44,6 +48,12 @@ internal class Encryption(context: Context, sdkRange: IntRange) {
 
         // Share random instance to prevent duplicate instantiation.
         val RANDOM by lazy { SecureRandom() }
+    }
+
+    init {
+        if (sdkRange.first !in BASE..sdkRange.last) {
+            throw IllegalArgumentException("Invalid SDK range")
+        }
     }
 
     private val modeToCipherHolders = SparseArray<CipherHolder>(2).apply {

@@ -189,4 +189,10 @@ class EncryptionTest {
             Encryption(context, BASE until JELLY_BEAN_MR2).decrypt(message)
         }
     }
+
+    @Suppress("EmptyRange")
+    @Test(expected = IllegalArgumentException::class)
+    fun wrong_sdk_range() {
+        Encryption(context, P..BASE)
+    }
 }

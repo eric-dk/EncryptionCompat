@@ -18,6 +18,7 @@
 package com.encryptioncompat.rx
 
 import android.content.Context
+import android.os.Build
 import com.encryptioncompat.EncryptionCompat
 import kotlinx.coroutines.rx3.rxSingle
 
@@ -31,10 +32,15 @@ import kotlinx.coroutines.rx3.rxSingle
  * backwards-compatibility for decryption.
  *
  * @param context           Context
- * @param minSdk            Minimum API level
+ * @param sdkRange          Target API levels
  */
-class RxEncryptionCompat(context: Context, minSdk: Int) {
-    private val encryption = EncryptionCompat(context, minSdk)
+class RxEncryptionCompat(context: Context, sdkRange: IntRange) {
+    private val encryption = EncryptionCompat(context, sdkRange)
+
+    @JvmOverloads
+    constructor(context:Context,
+                minSdk: Int,
+                maxSdk: Int = Build.VERSION.SDK_INT) : this(context, minSdk..maxSdk)
 
     /**
      * Encrypts {@code message}. Key management depends on device support.
