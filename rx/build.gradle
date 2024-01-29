@@ -14,8 +14,12 @@ android {
         targetSdkVersion versions.sdk.target
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
     }
-    kotlinOptions {
-        jvmTarget = '1.8'
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    kotlin {
+        jvmToolchain(17)
     }
     publishing {
         singleVariant("release") {
